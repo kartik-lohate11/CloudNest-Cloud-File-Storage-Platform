@@ -1,4 +1,60 @@
 package com.cloud.CloudNest.services.impl;
 
-public class UserServiceImpl {
+import com.cloud.CloudNest.dto.FileMetaDataDto;
+import com.cloud.CloudNest.dto.UserDto;
+import com.cloud.CloudNest.dto.request.LoginRequest;
+import com.cloud.CloudNest.dto.request.UpdateProfileRequest;
+import com.cloud.CloudNest.entities.UserData;
+import com.cloud.CloudNest.exception.UserNotFoundException;
+import com.cloud.CloudNest.repository.UserDataRepository;
+import com.cloud.CloudNest.services.UserService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserDataRepository userDataRepository;
+
+    @Override
+    public UserDto registerUser(UserDto user) {
+        return null;
+    }
+
+    @Override
+    public UserDto loginUser(LoginRequest request) {
+        UserData userData = userDataRepository.findByUserNameAndPassword(request.userName(), request.password());
+        if (userData != null) return UserDto.builder()
+                .userName(userData.getUserName())
+                .mail(userData.getMail())
+                .files(userData.getFiles()
+                        .stream()
+                        .map(file -> FileMetaDataDto.builder()
+                                .id(file.getId())
+                                .originalFileName(file.getOriginalFileName())
+                                .contentType(file.getContentType())
+                                .size(file.getSize())
+                                .createdAt(file.getCreatedAt())
+                                .build())
+                        .toList())
+                .build();
+
+        else throw new UserNotFoundException(request.userName() + " User Not Found");
+    }
+
+    @Override
+    public UserDto getUserById(Long id) {
+        return null;
+    }
+
+    @Override
+    public UserDto getUserByEmail(String mail) {
+        return null;
+    }
+
+    @Override
+    public UserDto updateProfile(UpdateProfileRequest request) {
+        return null;
+    }
 }

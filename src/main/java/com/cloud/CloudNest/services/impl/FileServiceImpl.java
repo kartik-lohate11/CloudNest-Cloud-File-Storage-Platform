@@ -1,4 +1,4 @@
 package com.cloud.CloudNest.services.impl;
 
-public class FileUploadServiceImpl {
+public class FileServiceImpl {
 }

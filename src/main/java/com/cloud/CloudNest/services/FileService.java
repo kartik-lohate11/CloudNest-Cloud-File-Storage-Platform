@@ -1,4 +1,4 @@
 package com.cloud.CloudNest.services;
 
-public interface FileUploadService {
+public interface FileService {
 }
