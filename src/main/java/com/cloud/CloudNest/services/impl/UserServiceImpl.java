@@ -1,6 +1,5 @@
 package com.cloud.CloudNest.services.impl;
 
-import com.cloud.CloudNest.dto.FileMetaDataDto;
 import com.cloud.CloudNest.dto.UserDto;
 import com.cloud.CloudNest.dto.request.LoginRequest;
 import com.cloud.CloudNest.dto.request.UpdateProfileRequest;
@@ -19,26 +18,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto registerUser(UserDto user) {
-        return null;
+        return UserDto.toDto(userDataRepository.save(user.toEntity()));
     }
 
     @Override
     public UserDto loginUser(LoginRequest request) {
         UserData userData = userDataRepository.findByUserNameAndPassword(request.userName(), request.password());
-        if (userData != null) return UserDto.builder()
-                .userName(userData.getUserName())
-                .mail(userData.getMail())
-                .files(userData.getFiles()
-                        .stream()
-                        .map(file -> FileMetaDataDto.builder()
-                                .id(file.getId())
-                                .originalFileName(file.getOriginalFileName())
-                                .contentType(file.getContentType())
-                                .size(file.getSize())
-                                .createdAt(file.getCreatedAt())
-                                .build())
-                        .toList())
-                .build();
+        if (userData != null) return UserDto.toDto(userData);
 
         else throw new UserNotFoundException(request.userName() + " User Not Found");
     }
@@ -56,5 +42,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto updateProfile(UpdateProfileRequest request) {
         return null;
+    }
+
+    @Override
+    public UserDto getByUserName(String userName) {
+        UserData userData = userDataRepository.findByUserName(userName);
+        if (userData != null) return UserDto.toDto(userData);
+        throw new UserNotFoundException(userName + " Not Found");
     }
 }

@@ -16,4 +16,5 @@ public interface UserService {
 
     UserDto updateProfile(UpdateProfileRequest request);
 
+    UserDto getByUserName(String userName);
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestBody LoginRequest request) {

@@ -51,4 +51,21 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(404).body(errorMessage);
     }
 
+    @ExceptionHandler(FileUploadingException.class)
+    public ResponseEntity<?> handleFileException(FileUploadingException exception) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.name()
+        );
+        return ResponseEntity.status(403).body(errorMessage);
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<?> handleFileNotFoundException(FileNotFoundException exception) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.name()
+        );
+        return ResponseEntity.status(404).body(errorMessage);
+    }
 }
