@@ -52,6 +52,7 @@ public class StorageServiceImpl implements StorageService {
             return objectName;
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new FileUploadingException(
                     "Failed to upload file to MinIO"
             );
@@ -69,7 +70,7 @@ public class StorageServiceImpl implements StorageService {
                             .build()
             );
         } catch (Exception e) {
-            log.error("issue to exporting " + e.getMessage());
+            e.printStackTrace();
             throw new FileUploadingException("Issue to process files");
         }
     }
