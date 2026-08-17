@@ -5,6 +5,7 @@ import com.cloud.CloudNest.services.StorageService;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,6 +73,24 @@ public class StorageServiceImpl implements StorageService {
         } catch (Exception e) {
             e.printStackTrace();
             throw new FileUploadingException("Issue to process files");
+        }
+    }
+
+    @Override
+    public void deleteFile(String objectName) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build()
+            );
+
+            log.info(objectName+" is removed from ObjectSpace");
+        } catch (Exception e) {
+            log.error(objectName," : Issue to remove object");
+            throw new RuntimeException(
+                    "Failed to delete file from MinIO", e);
         }
     }
 }

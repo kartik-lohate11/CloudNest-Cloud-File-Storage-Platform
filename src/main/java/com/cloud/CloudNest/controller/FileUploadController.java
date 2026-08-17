@@ -38,8 +38,7 @@ public class FileUploadController {
 
     @GetMapping("/download/{fileName}")
     public ResponseEntity<InputStreamResource> downloadFile(
-            @PathVariable String fileName,
-            @RequestHeader("userName") String userName) {
+            @PathVariable String fileName) {
 
         FileMetadata metadata =
                 fileUploadService.getFileMetadata(fileName).toEntity();
@@ -57,5 +56,16 @@ public class FileUploadController {
                         "attachment; filename=\"" +
                                 metadata.getOriginalFileName() + "\"")
                 .body(new InputStreamResource(inputStream));
+    }
+
+    @DeleteMapping("/delete/{fileName}")
+    public ResponseEntity<?> deleteFile(
+            @PathVariable String fileName) {
+
+        fileUploadService.deleteFile(fileName);
+
+        return ResponseEntity.ok(
+                "File deleted successfully"
+        );
     }
 }

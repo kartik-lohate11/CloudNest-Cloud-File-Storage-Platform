@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface FileMetaDataRepository extends JpaRepository<FileMetadata, Long> {
     Optional<FileMetadata> findByOriginalFileName(String originalFileName);
+    FileMetadata findByObjectName(String objectName);
 }
