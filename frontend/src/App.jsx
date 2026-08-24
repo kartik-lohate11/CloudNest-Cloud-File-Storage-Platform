@@ -8,7 +8,6 @@ import Files from "./pages/Files";
 import Notes from "./pages/Notes";
 import Archive from "./pages/Archive";
 import Trash from "./pages/Trash";
-import Settings from "./pages/Settings";
 import HelpCenter from "./pages/HelpCenter";
 
 function App() {

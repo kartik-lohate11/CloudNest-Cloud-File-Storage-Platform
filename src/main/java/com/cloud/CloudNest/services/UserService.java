@@ -1,6 +1,7 @@
 package com.cloud.CloudNest.services;
 
 import com.cloud.CloudNest.dto.UserDto;
+import com.cloud.CloudNest.dto.request.ForgotPasswordRequest;
 import com.cloud.CloudNest.dto.request.LoginRequest;
 import com.cloud.CloudNest.dto.request.UpdateProfileRequest;
 
@@ -17,4 +18,6 @@ public interface UserService {
     UserDto updateProfile(UpdateProfileRequest request);
 
     UserDto getByUserName(String userName);
+
+    String resetPassword(ForgotPasswordRequest request);
 }

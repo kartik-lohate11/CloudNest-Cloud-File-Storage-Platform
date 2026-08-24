@@ -7,7 +7,6 @@ import {
   Archive,
   Trash2,
   HelpCircle,
-  Settings,
   Plus,
   X,
 } from "lucide-react";
@@ -125,20 +124,6 @@ const Sidebar = () => {
           >
             <HelpCircle className="w-5 h-5 text-gray-400" />
             <span>Help Center</span>
-          </NavLink>
-          <NavLink
-            to="/settings"
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                isActive
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
-              }`
-            }
-          >
-            <Settings className="w-5 h-5 text-gray-400" />
-            <span>Settings</span>
           </NavLink>
         </div>
       </aside>

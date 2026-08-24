@@ -1,6 +1,7 @@
 package com.cloud.CloudNest.services.impl;
 
 import com.cloud.CloudNest.dto.UserDto;
+import com.cloud.CloudNest.dto.request.ForgotPasswordRequest;
 import com.cloud.CloudNest.dto.request.LoginRequest;
 import com.cloud.CloudNest.dto.request.UpdateProfileRequest;
 import com.cloud.CloudNest.entities.UserData;
@@ -10,6 +11,7 @@ import com.cloud.CloudNest.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -63,5 +65,31 @@ public class UserServiceImpl implements UserService {
         }
         if (userData != null) return UserDto.toDto(userData);
         throw new UserNotFoundException(userName + " Not Found");
+    }
+
+    @Transactional
+    @Override
+    public String resetPassword(ForgotPasswordRequest request) {
+
+        // Check user exists
+        if (!userDataRepository.existsByMail(request.mail())) {
+            throw new RuntimeException("User not found");
+        }
+
+        // Encrypt password
+//        String encodedPassword =
+//                passwordEncoder.encode(request.getNewPassword());
+
+        // Update password
+        int updatedRows = userDataRepository.updateUserPassword(
+                request.password(),
+                request.mail()
+        );
+
+        if (updatedRows == 0) {
+            throw new RuntimeException("Password update failed");
+        }
+
+        return "Password updated successfully";
     }
 }

@@ -101,6 +101,14 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public Page<FileMetaDataDto> searchAndFilterFiles(String userName, String query, String fileType, Pageable pageable) {
+        org.springframework.data.jpa.domain.Specification<FileMetadata> spec =
+                com.cloud.CloudNest.specification.FileSpecification.getSearchAndFilterSpecification(userName, query, fileType);
+        Page<FileMetadata> page = fileMetadataRepository.findAll(spec, pageable);
+        return page.map(FileMetaDataDto::toDto);
+    }
+
+    @Override
     public Long getUserStorageUsage(String userName) {
         Long sum = fileMetadataRepository.sumSizeByUploadedUser(userName);
         return sum != null ? sum : 0L;

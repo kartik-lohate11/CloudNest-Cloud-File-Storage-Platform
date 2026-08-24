@@ -20,6 +20,8 @@ public class UserData {
 
     private String userName;
     private String password;
+
+    @Column(unique = true)
     private String mail;
 
     @CreationTimestamp

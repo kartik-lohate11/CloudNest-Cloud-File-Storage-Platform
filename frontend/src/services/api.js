@@ -133,12 +133,83 @@ export const authService = {
       return { success: true, message: "Reset instructions sent to your email" };
     }
   },
+
+  sendOtp: async (email, otpType = "REGISTRATION") => {
+    const payload = { mail: email, email: email, otpType: otpType, type: otpType };
+    try {
+      const response = await api.post("/user/api/send-otp", payload);
+      return response.data;
+    } catch (error) {
+      if (error?.response) {
+        throw error;
+      }
+      try {
+        const response2 = await api.post("/auth/send-otp", payload);
+        return response2.data;
+      } catch (err2) {
+        throw err2;
+      }
+    }
+  },
+
+  verifyOtp: async (email, otp, otpType = "REGISTRATION") => {
+    const payload = { mail: email, email: email, otp: otp, otpType: otpType, type: otpType };
+    try {
+      const response = await api.post("/user/api/verify-otp", payload);
+      return response.data;
+    } catch (error) {
+      if (error?.response) {
+        throw error;
+      }
+      try {
+        const response2 = await api.post("/auth/verify-otp", payload);
+        return response2.data;
+      } catch (err2) {
+        throw err2;
+      }
+    }
+  },
+
+  updatePassword: async (email, password) => {
+    try {
+      const response = await api.post("/user/api/update-password", {
+        mail: email,
+        password: password,
+      });
+      return response.data;
+    } catch (error) {
+      if (error?.response) {
+        throw error;
+      }
+      throw new Error("Password update failed. Please try again.");
+    }
+  },
+
+  resetPassword: async (data) => {
+    try {
+      const response = await api.post("/user/api/update-password", {
+        mail: data.email,
+        password: data.newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      if (error?.response) {
+        throw error;
+      }
+      throw new Error("Password update failed. Please try again.");
+    }
+  },
 };
 
 export const fileService = {
-  getUserFiles: async (userName, page = 0, size = 20) => {
+  getUserFiles: async (userName, page = 0, size = 20, query = "", fileType = "all", sortBy = "date-desc") => {
     try {
-      const response = await api.get(`/file/api/user/${userName}?page=${page}&size=${size}`);
+      let url = `/file/api/user/${userName}?page=${page}&size=${size}`;
+      if (query) url += `&query=${encodeURIComponent(query)}`;
+      if (fileType && fileType !== "all") url += `&fileType=${encodeURIComponent(fileType)}`;
+      if (sortBy) url += `&sortBy=${encodeURIComponent(sortBy)}`;
+
+      const response = await api.get(url);
       const data = response.data || {};
       const rawContent = data.content || (Array.isArray(data) ? data : []);
       const mappedFiles = rawContent.map(transformBackendFile).filter(Boolean);
@@ -163,6 +234,72 @@ export const fileService = {
         totalStorageUsedBytes: 0,
         categoryStats: null,
       };
+    }
+  },
+
+  searchFiles: async (userName, query = "", page = 0, size = 20, sortBy = "date-desc") => {
+    try {
+      const response = await api.get(
+        `/file/api/search/${userName}?query=${encodeURIComponent(query)}&page=${page}&size=${size}&sortBy=${encodeURIComponent(sortBy)}`
+      );
+      const data = response.data || {};
+      const rawContent = data.content || [];
+      const mappedFiles = rawContent.map(transformBackendFile).filter(Boolean);
+
+      return {
+        files: mappedFiles,
+        currentPage: data.currentPage || 0,
+        totalElements: data.totalElements || mappedFiles.length,
+        totalPages: data.totalPages || 0,
+        pageSize: data.pageSize || 20,
+      };
+    } catch (error) {
+      console.warn("Failed to search user files from backend:", error?.message);
+      return { files: [], currentPage: 0, totalElements: 0, totalPages: 0, pageSize: 20 };
+    }
+  },
+
+  filterFiles: async (userName, fileType = "all", page = 0, size = 20, sortBy = "date-desc") => {
+    try {
+      const response = await api.get(
+        `/file/api/filter/${userName}?fileType=${encodeURIComponent(fileType)}&page=${page}&size=${size}&sortBy=${encodeURIComponent(sortBy)}`
+      );
+      const data = response.data || {};
+      const rawContent = data.content || [];
+      const mappedFiles = rawContent.map(transformBackendFile).filter(Boolean);
+
+      return {
+        files: mappedFiles,
+        currentPage: data.currentPage || 0,
+        totalElements: data.totalElements || mappedFiles.length,
+        totalPages: data.totalPages || 0,
+        pageSize: data.pageSize || 20,
+      };
+    } catch (error) {
+      console.warn("Failed to filter user files from backend:", error?.message);
+      return { files: [], currentPage: 0, totalElements: 0, totalPages: 0, pageSize: 20 };
+    }
+  },
+
+  sortFiles: async (userName, sortBy = "date-desc", page = 0, size = 20) => {
+    try {
+      const response = await api.get(
+        `/file/api/sort/${userName}?sortBy=${encodeURIComponent(sortBy)}&page=${page}&size=${size}`
+      );
+      const data = response.data || {};
+      const rawContent = data.content || [];
+      const mappedFiles = rawContent.map(transformBackendFile).filter(Boolean);
+
+      return {
+        files: mappedFiles,
+        currentPage: data.currentPage || 0,
+        totalElements: data.totalElements || mappedFiles.length,
+        totalPages: data.totalPages || 0,
+        pageSize: data.pageSize || 20,
+      };
+    } catch (error) {
+      console.warn("Failed to sort user files from backend:", error?.message);
+      return { files: [], currentPage: 0, totalElements: 0, totalPages: 0, pageSize: 20 };
     }
   },
 

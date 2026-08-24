@@ -55,6 +55,7 @@ export const FileProvider = ({ children }) => {
   const [pageSize] = useState(20);
   const [totalStorageUsedBytes, setTotalStorageUsedBytes] = useState(0);
   const [backendCategoryStats, setBackendCategoryStats] = useState(null);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
 
   // Notes Pagination States
   const [notesCurrentPage, setNotesCurrentPage] = useState(0);
@@ -207,26 +208,36 @@ export const FileProvider = ({ children }) => {
     };
   }, [files, totalElements, totalStorageUsedBytes, backendCategoryStats]);
 
-  // Fetch user files from backend REST API with pagination
-  const fetchUserFiles = async (page = 0) => {
+  // Fetch user files from backend REST API with pagination, debounced search query, file type filter & sorting
+  const fetchUserFiles = async (page = 0, query = searchQuery, filter = fileTypeFilter, sort = sortBy) => {
     if (user && user.name) {
-      const res = await fileService.getUserFiles(user.name, page, pageSize);
-      if (res) {
-        setFiles(res.files);
-        setCurrentPage(res.currentPage);
-        setTotalPages(res.totalPages);
-        setTotalElements(res.totalElements);
-        setTotalStorageUsedBytes(res.totalStorageUsedBytes);
-        if (res.categoryStats) {
-          setBackendCategoryStats(res.categoryStats);
+      setIsLoadingFiles(true);
+      try {
+        const res = await fileService.getUserFiles(user.name, page, pageSize, query, filter, sort);
+        if (res) {
+          setFiles(res.files);
+          setCurrentPage(res.currentPage);
+          setTotalPages(res.totalPages);
+          setTotalElements(res.totalElements);
+          setTotalStorageUsedBytes(res.totalStorageUsedBytes);
+          if (res.categoryStats) {
+            setBackendCategoryStats(res.categoryStats);
+          }
         }
+      } finally {
+        setIsLoadingFiles(false);
       }
     }
   };
 
+  // Debounce search query, file type filter and sort changes by 350ms before triggering backend API across all database records
   useEffect(() => {
-    fetchUserFiles(0);
-  }, [user?.name]);
+    const timer = setTimeout(() => {
+      fetchUserFiles(0, searchQuery, fileTypeFilter, sortBy);
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, fileTypeFilter, sortBy, user?.name]);
 
   // Modal actions
   const openModal = (type, data = null) => {
@@ -375,6 +386,7 @@ export const FileProvider = ({ children }) => {
         user,
         setUser,
         files,
+        isLoadingFiles,
         trashFiles,
         archiveFiles,
         notes,

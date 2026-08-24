@@ -1,6 +1,7 @@
 package com.cloud.CloudNest.controller;
 
 import com.cloud.CloudNest.dto.UserDto;
+import com.cloud.CloudNest.dto.request.ForgotPasswordRequest;
 import com.cloud.CloudNest.dto.request.LoginRequest;
 import com.cloud.CloudNest.dto.request.SendOtpRequest;
 import com.cloud.CloudNest.dto.request.VerifyOtpRequest;
@@ -41,5 +42,10 @@ public class UserController {
     @PostMapping("/verify-otp")
     public ResponseEntity<OtpResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
         return ResponseEntity.ok(otpService.verifyOtp(request));
+    }
+
+    @PostMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@RequestBody ForgotPasswordRequest request) {
+        return ResponseEntity.ok(userService.resetPassword(request));
     }
 }

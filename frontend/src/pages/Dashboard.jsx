@@ -25,6 +25,7 @@ import { useFiles } from "../context/FileContext";
 const Dashboard = () => {
   const {
     files,
+    isLoadingFiles,
     storageStats,
     searchQuery,
     fileTypeFilter,
@@ -267,14 +268,20 @@ const Dashboard = () => {
             </div>
 
             {/* Display Files */}
-            {sortedFiles.length === 0 ? (
+            {isLoadingFiles ? (
+              <div className="flex-1 min-h-[220px] rounded-2xl border border-white/10 bg-white/5 p-12 flex flex-col items-center justify-center text-center animate-pulse">
+                <div className="w-9 h-9 border-3 border-blue-400 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-white font-medium text-sm">Searching & filtering files...</p>
+                <p className="text-xs text-gray-400 mt-1">Fetching records from database...</p>
+              </div>
+            ) : sortedFiles.length === 0 ? (
               <div className="flex-1 min-h-[220px] rounded-2xl border border-dashed border-white/15 bg-white/5 p-8 flex flex-col items-center justify-center text-center">
                 <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
                   <FolderOpen className="w-7 h-7 text-gray-500" />
                 </div>
                 <h4 className="text-white font-semibold text-base mb-1">No files found</h4>
                 <p className="text-gray-400 text-sm max-w-sm">
-                  Upload files to your cloud storage to start organizing documents.
+                  No matching files found. Try adjusting your search query or filter.
                 </p>
               </div>
             ) : viewMode === "table" ? (

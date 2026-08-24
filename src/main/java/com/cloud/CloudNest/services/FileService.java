@@ -13,6 +13,7 @@ public interface FileService {
     FileMetaDataDto getFileMetadata(String identifier);
     List<FileMetaDataDto> getUserFiles(String userName);
     Page<FileMetaDataDto> getUserFilesPaginated(String userName, Pageable pageable);
+    Page<FileMetaDataDto> searchAndFilterFiles(String userName, String query, String fileType, Pageable pageable);
     Long getUserStorageUsage(String userName);
     java.util.Map<String, Object> getUserCategoryStats(String userName);
     FileMetaDataDto renameFile(String identifier, String newName);

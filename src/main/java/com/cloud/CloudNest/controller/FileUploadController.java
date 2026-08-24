@@ -26,14 +26,39 @@ public class FileUploadController {
     private final StorageService storageService;
     private final NoteService noteService;
 
+    private org.springframework.data.domain.Sort parseSort(String sortBy) {
+        if (sortBy == null || sortBy.trim().isEmpty() || "date-desc".equalsIgnoreCase(sortBy) || "newest".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("id").descending();
+        }
+        if ("date-asc".equalsIgnoreCase(sortBy) || "oldest".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("id").ascending();
+        }
+        if ("name-asc".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("originalFileName").ascending();
+        }
+        if ("name-desc".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("originalFileName").descending();
+        }
+        if ("size-desc".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("size").descending();
+        }
+        if ("size-asc".equalsIgnoreCase(sortBy)) {
+            return org.springframework.data.domain.Sort.by("size").ascending();
+        }
+        return org.springframework.data.domain.Sort.by("id").descending();
+    }
+
     @GetMapping("/user/{userName}")
     public ResponseEntity<?> getUserFiles(
             @PathVariable String userName,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "5") int size) {
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "fileType", required = false) String fileType,
+            @RequestParam(value = "sortBy", defaultValue = "date-desc") String sortBy) {
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id").descending());
-        org.springframework.data.domain.Page<FileMetaDataDto> filePage = fileUploadService.getUserFilesPaginated(userName, pageable);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, parseSort(sortBy));
+        org.springframework.data.domain.Page<FileMetaDataDto> filePage = fileUploadService.searchAndFilterFiles(userName, query, fileType, pageable);
         Long totalStorageBytes = fileUploadService.getUserStorageUsage(userName);
 
         java.util.Map<String, Object> response = new java.util.HashMap<>();
@@ -44,6 +69,70 @@ public class FileUploadController {
         response.put("pageSize", filePage.getSize());
         response.put("totalStorageUsedBytes", totalStorageBytes);
         response.put("categoryStats", fileUploadService.getUserCategoryStats(userName));
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/search/{userName}")
+    public ResponseEntity<?> searchFiles(
+            @PathVariable String userName,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "sortBy", defaultValue = "date-desc") String sortBy) {
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, parseSort(sortBy));
+        org.springframework.data.domain.Page<FileMetaDataDto> filePage = fileUploadService.searchAndFilterFiles(userName, query, null, pageable);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("content", filePage.getContent());
+        response.put("currentPage", filePage.getNumber());
+        response.put("totalElements", filePage.getTotalElements());
+        response.put("totalPages", filePage.getTotalPages());
+        response.put("pageSize", filePage.getSize());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/filter/{userName}")
+    public ResponseEntity<?> filterFiles(
+            @PathVariable String userName,
+            @RequestParam(value = "fileType", required = false) String fileType,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
+            @RequestParam(value = "sortBy", defaultValue = "date-desc") String sortBy) {
+
+        String type = (fileType != null && !fileType.isEmpty()) ? fileType : category;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, parseSort(sortBy));
+        org.springframework.data.domain.Page<FileMetaDataDto> filePage = fileUploadService.searchAndFilterFiles(userName, null, type, pageable);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("content", filePage.getContent());
+        response.put("currentPage", filePage.getNumber());
+        response.put("totalElements", filePage.getTotalElements());
+        response.put("totalPages", filePage.getTotalPages());
+        response.put("pageSize", filePage.getSize());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/sort/{userName}")
+    public ResponseEntity<?> sortFiles(
+            @PathVariable String userName,
+            @RequestParam(value = "sortBy", defaultValue = "date-desc") String sortBy,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, parseSort(sortBy));
+        org.springframework.data.domain.Page<FileMetaDataDto> filePage = fileUploadService.searchAndFilterFiles(userName, null, null, pageable);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("content", filePage.getContent());
+        response.put("currentPage", filePage.getNumber());
+        response.put("totalElements", filePage.getTotalElements());
+        response.put("totalPages", filePage.getTotalPages());
+        response.put("pageSize", filePage.getSize());
 
         return ResponseEntity.ok(response);
     }

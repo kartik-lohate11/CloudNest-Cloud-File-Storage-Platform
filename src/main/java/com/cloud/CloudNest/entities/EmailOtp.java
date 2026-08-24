@@ -1,5 +1,6 @@
 package com.cloud.CloudNest.entities;
 
+import com.cloud.CloudNest.enums.OtpType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,9 @@ public class EmailOtp {
     private String otp;
 
     private LocalDateTime expiryTime;
+
+    @Enumerated(EnumType.STRING)
+    private OtpType otpType;
 
     private boolean verified;
 

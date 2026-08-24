@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Cloud } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Mail, Lock, Eye, EyeOff, Cloud, CheckCircle2 } from "lucide-react";
 import { authService } from "../services/api";
 import { useFiles } from "../context/FileContext";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUser } = useFiles();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +14,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg] = useState(location.state?.message || "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,6 +77,13 @@ const Login = () => {
               Please enter your details to sign in.
             </p>
           </div>
+
+          {successMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">

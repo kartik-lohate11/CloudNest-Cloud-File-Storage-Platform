@@ -69,6 +69,24 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(404).body(errorMessage);
     }
 
+    @ExceptionHandler(UserAllReadyExistsException.class)
+    public ResponseEntity<?> handleUserAllReadyExistsException(UserAllReadyExistsException exception) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.name()
+        );
+        return ResponseEntity.status(409).body(errorMessage);
+    }
+
+    @ExceptionHandler(UserInvalidInputException.class)
+    public ResponseEntity<?> handleUserAllReadyExistsException(UserInvalidInputException exception) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.name()
+        );
+        return ResponseEntity.status(500).body(errorMessage);
+    }
+
     @ExceptionHandler(StorageLimitExceededException.class)
     public ResponseEntity<?> handleStorageLimitExceededException(StorageLimitExceededException exception) {
         ApiErrorMessage errorMessage = new ApiErrorMessage(
