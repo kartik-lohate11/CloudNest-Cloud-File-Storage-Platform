@@ -34,8 +34,8 @@ const HelpCenter = () => {
       a: "When you delete a file, it is transferred to the Trash repository. Files remain in Trash for 30 days before being purged, and can be restored with a single click at any time.",
     },
     {
-      q: "What are Personal Files versus Workspace Files?",
-      a: "Personal Files are scoped strictly to your individual user account. Workspace Files (such as Telkom, Unicorn, and Tokopedia Collections) are collaborative shared volumes for organizational teams.",
+      q: "How are my uploaded files stored?",
+      a: "All files uploaded to CloudNest are stored securely in MinIO object storage with metadata indexed in a MySQL relational database.",
     },
   ];
 

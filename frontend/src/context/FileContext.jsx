@@ -1,82 +1,66 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
-import { INITIAL_FILES, INITIAL_NOTES } from "../services/api";
+import { INITIAL_FILES, INITIAL_NOTES, fileService, noteService } from "../services/api";
 
 const FileContext = createContext(null);
+
+const sanitizeLegacyStorage = (key) => {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+    // Filter out legacy static mock items stored from previous runs
+    return parsed.filter((item) => {
+      if (!item || typeof item !== "object") return false;
+      const id = String(item.id || "");
+      const name = String(item.name || "");
+      if (id.startsWith("f-") || id.startsWith("trash-") || id.startsWith("arch-") || id.startsWith("n-")) return false;
+      if (name.includes("holiday") || name.includes("bulkAssignment") || name.includes("sem-report") || name.includes("prototype-vid")) return false;
+      return true;
+    });
+  } catch {
+    return [];
+  }
+};
 
 export const FileProvider = ({ children }) => {
   // Authentication State
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("cloudnest_user");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          name: "Kartik Lohate",
-          email: "kartiklohate8@gmail.com",
-          role: "Pro Administrator",
-          plan: "Pro 120 GB Plan",
-          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-        };
+    try {
+      const savedUser = localStorage.getItem("cloudnest_user");
+      return savedUser ? JSON.parse(savedUser) : { name: "Kartik Lohate", email: "kartiklohate8@gmail.com", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", role: "Cloud Administrator", plan: "Pro 100 GB Plan" };
+    } catch {
+      return { name: "Kartik Lohate", email: "kartiklohate8@gmail.com", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80", role: "Cloud Administrator", plan: "Pro 100 GB Plan" };
+    }
   });
 
-  // Files State
-  const [files, setFiles] = useState(() => {
-    const saved = localStorage.getItem("cloudnest_files");
-    return saved ? JSON.parse(saved) : INITIAL_FILES;
-  });
+  // Files State - Clean initial states, purged of any cached legacy static mock items
+  const [files, setFiles] = useState([]);
+  const [trashFiles, setTrashFiles] = useState(() => sanitizeLegacyStorage("cloudnest_trash"));
+  const [archiveFiles, setArchiveFiles] = useState(() => sanitizeLegacyStorage("cloudnest_archive"));
+  const [notes, setNotes] = useState([]);
 
-  const [trashFiles, setTrashFiles] = useState(() => {
-    const saved = localStorage.getItem("cloudnest_trash");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: "trash-1",
-            name: "old-draft-specs.docx",
-            type: "document",
-            extension: "docx",
-            size: "420.5 KB",
-            sizeBytes: 430592,
-            uploadDate: "12 Dec 2023",
-            deletedDate: "14 Jan 2024",
-            location: "/Personal File/Personal Collections",
-            owner: "Kartik Lohate",
-          },
-        ];
-  });
-
-  const [archiveFiles, setArchiveFiles] = useState(() => {
-    const saved = localStorage.getItem("cloudnest_archive");
-    return saved
-      ? JSON.parse(saved)
-      : [
-          {
-            id: "arch-1",
-            name: "annual-tax-report-2022.pdf",
-            type: "pdf",
-            extension: "pdf",
-            size: "8.4 MB",
-            sizeBytes: 8808038,
-            uploadDate: "15 Jan 2023",
-            archivedDate: "02 Jan 2024",
-            location: "/Workspace File/Telkom Collections",
-            owner: "Kartik Lohate",
-          },
-        ];
-  });
-
-  // Notes State
-  const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem("cloudnest_notes");
-    return saved ? JSON.parse(saved) : INITIAL_NOTES;
-  });
-
-  // Navigation & Filter States
+  // Navigation, Pagination & Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState("all");
   const [fileTypeFilter, setFileTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date-desc");
   const [viewMode, setViewMode] = useState("table"); // 'table' | 'grid'
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Pagination States (20 records per page)
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [pageSize] = useState(20);
+  const [totalStorageUsedBytes, setTotalStorageUsedBytes] = useState(0);
+  const [backendCategoryStats, setBackendCategoryStats] = useState(null);
+
+  // Notes Pagination States
+  const [notesCurrentPage, setNotesCurrentPage] = useState(0);
+  const [notesTotalPages, setNotesTotalPages] = useState(0);
+  const [notesTotalElements, setNotesTotalElements] = useState(0);
+  const [notesPageSize] = useState(20);
 
   // Modal State
   const [modalState, setModalState] = useState({
@@ -106,25 +90,143 @@ export const FileProvider = ({ children }) => {
     localStorage.setItem("cloudnest_user", JSON.stringify(user));
   }, [user]);
 
-  // Dynamic Storage Calculation
+  // 100% Dynamic Storage Calculation based strictly on ALL active user files in database & 5 GB Limit
   const storageStats = useMemo(() => {
-    const stats = {
-      image: { count: 1768, usedGB: 20, totalGB: 120, percent: 16.6 },
-      video: { count: 223, usedGB: 10, totalGB: 120, percent: 8.3 },
-      document: { count: 1522, usedGB: 15, totalGB: 120, percent: 12.5 },
-      other: { count: 1034, usedGB: 35, totalGB: 120, percent: 29.1 },
+    const TOTAL_STORAGE_GB = 5; // 5 GB limit per user
+
+    const categories = {
+      image: { count: 0, bytes: 0 },
+      video: { count: 0, bytes: 0 },
+      document: { count: 0, bytes: 0 },
+      other: { count: 0, bytes: 0 },
     };
 
-    // Calculate extra uploaded files
-    files.forEach((f) => {
-      if (f.type === "image") stats.image.count += 1;
-      else if (f.type === "video") stats.video.count += 1;
-      else if (f.type === "document" || f.type === "pdf") stats.document.count += 1;
-      else stats.other.count += 1;
-    });
+    const hasBackendStats =
+      backendCategoryStats &&
+      (backendCategoryStats.image?.count > 0 ||
+        backendCategoryStats.video?.count > 0 ||
+        backendCategoryStats.document?.count > 0 ||
+        backendCategoryStats.other?.count > 0);
 
-    return stats;
-  }, [files]);
+    if (hasBackendStats) {
+      categories.image.count = backendCategoryStats.image.count || 0;
+      categories.image.bytes = backendCategoryStats.image.bytes || 0;
+      categories.video.count = backendCategoryStats.video.count || 0;
+      categories.video.bytes = backendCategoryStats.video.bytes || 0;
+      categories.document.count = backendCategoryStats.document.count || 0;
+      categories.document.bytes = backendCategoryStats.document.bytes || 0;
+      categories.other.count = backendCategoryStats.other.count || 0;
+      categories.other.bytes = backendCategoryStats.other.bytes || 0;
+    } else {
+      (files || []).forEach((f) => {
+        const bytes = f.sizeBytes || 0;
+        if (f.type === "image") {
+          categories.image.count += 1;
+          categories.image.bytes += bytes;
+        } else if (f.type === "video") {
+          categories.video.count += 1;
+          categories.video.bytes += bytes;
+        } else if (f.type === "document" || f.type === "pdf") {
+          categories.document.count += 1;
+          categories.document.bytes += bytes;
+        } else {
+          categories.other.count += 1;
+          categories.other.bytes += bytes;
+        }
+      });
+    }
+
+    const formatGB = (bytes) => (bytes / (1024 * 1024 * 1024)).toFixed(2);
+    const formatSize = (bytes) => {
+      if (!bytes || bytes === 0) return "0 KB";
+      if (bytes >= 1024 * 1024 * 1024) {
+        return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+      }
+      if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      }
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    };
+
+    const calcPercent = (bytes) => {
+      const usedGB = bytes / (1024 * 1024 * 1024);
+      return Math.min(Number(((usedGB / TOTAL_STORAGE_GB) * 100).toFixed(1)), 100);
+    };
+
+    const overallUsedBytes =
+      totalStorageUsedBytes ||
+      categories.image.bytes +
+        categories.video.bytes +
+        categories.document.bytes +
+        categories.other.bytes;
+
+    const overallUsedGB = formatGB(overallUsedBytes);
+    const overallPercent = calcPercent(overallUsedBytes);
+    const maxBytes = 5 * 1024 * 1024 * 1024;
+    const remainingBytes = Math.max(0, maxBytes - overallUsedBytes);
+
+    return {
+      image: {
+        count: categories.image.count,
+        usedGB: formatGB(categories.image.bytes),
+        usedFormatted: formatSize(categories.image.bytes),
+        totalGB: TOTAL_STORAGE_GB,
+        percent: calcPercent(categories.image.bytes),
+      },
+      video: {
+        count: categories.video.count,
+        usedGB: formatGB(categories.video.bytes),
+        usedFormatted: formatSize(categories.video.bytes),
+        totalGB: TOTAL_STORAGE_GB,
+        percent: calcPercent(categories.video.bytes),
+      },
+      document: {
+        count: categories.document.count,
+        usedGB: formatGB(categories.document.bytes),
+        usedFormatted: formatSize(categories.document.bytes),
+        totalGB: TOTAL_STORAGE_GB,
+        percent: calcPercent(categories.document.bytes),
+      },
+      other: {
+        count: categories.other.count,
+        usedGB: formatGB(categories.other.bytes),
+        usedFormatted: formatSize(categories.other.bytes),
+        totalGB: TOTAL_STORAGE_GB,
+        percent: calcPercent(categories.other.bytes),
+      },
+      overall: {
+        totalElements: totalElements || files.length,
+        usedBytes: overallUsedBytes,
+        usedGB: overallUsedGB,
+        usedFormatted: formatSize(overallUsedBytes),
+        totalGB: TOTAL_STORAGE_GB,
+        percent: overallPercent,
+        remainingBytes,
+        maxBytes,
+      },
+    };
+  }, [files, totalElements, totalStorageUsedBytes, backendCategoryStats]);
+
+  // Fetch user files from backend REST API with pagination
+  const fetchUserFiles = async (page = 0) => {
+    if (user && user.name) {
+      const res = await fileService.getUserFiles(user.name, page, pageSize);
+      if (res) {
+        setFiles(res.files);
+        setCurrentPage(res.currentPage);
+        setTotalPages(res.totalPages);
+        setTotalElements(res.totalElements);
+        setTotalStorageUsedBytes(res.totalStorageUsedBytes);
+        if (res.categoryStats) {
+          setBackendCategoryStats(res.categoryStats);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchUserFiles(0);
+  }, [user?.name]);
 
   // Modal actions
   const openModal = (type, data = null) => {
@@ -135,41 +237,12 @@ export const FileProvider = ({ children }) => {
     setModalState({ isOpen: false, type: null, data: null });
   };
 
-  // File Operations
-  const uploadFiles = (newFileList, targetLocation = "/Personal File/Personal Collections") => {
-    const formattedFiles = newFileList.map((item, idx) => {
-      const ext = item.name.split(".").pop().toLowerCase();
-      let type = "other";
-      if (["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext)) type = "image";
-      else if (["mp4", "mov", "mkv", "avi", "webm"].includes(ext)) type = "video";
-      else if (["pdf"].includes(ext)) type = "pdf";
-      else if (["doc", "docx", "txt", "xlsx", "xls", "csv", "ppt", "pptx"].includes(ext)) type = "document";
-
-      const sizeMB = (item.size / (1024 * 1024)).toFixed(2);
-      const sizeStr = item.size > 1024 * 1024 * 1024
-        ? `${(item.size / (1024 * 1024 * 1024)).toFixed(2)} GB`
-        : item.size > 1024 * 1024
-        ? `${sizeMB} MB`
-        : `${(item.size / 1024).toFixed(2)} KB`;
-
-      return {
-        id: `f-${Date.now()}-${idx}`,
-        name: item.name,
-        type,
-        extension: ext,
-        size: sizeStr,
-        sizeBytes: item.size,
-        uploadDate: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-        updated: "Just now",
-        location: targetLocation,
-        owner: user.name,
-        isQuickAccess: true,
-        isArchived: false,
-        isTrash: false,
-      };
-    });
-
-    setFiles((prev) => [...formattedFiles, ...prev]);
+  // Dynamic File Operations with Spring Boot & MinIO
+  const uploadFiles = async (newFileList) => {
+    for (const item of newFileList) {
+      await fileService.uploadFile(item, user?.name || "User");
+    }
+    await fetchUserFiles(0);
     closeModal();
   };
 
@@ -196,11 +269,20 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const permanentlyDelete = (fileId) => {
-    setTrashFiles((prev) => prev.filter((f) => f.id !== fileId));
+  const permanentlyDelete = async (fileId) => {
+    const fileToDelete = trashFiles.find((f) => f.id === fileId);
+    if (fileToDelete) {
+      const identifier = fileToDelete.objectName || fileToDelete.name;
+      await fileService.deleteFile(identifier);
+      setTrashFiles((prev) => prev.filter((f) => f.id !== fileId));
+    }
   };
 
-  const emptyTrash = () => {
+  const emptyTrash = async () => {
+    for (const fileToDelete of trashFiles) {
+      const identifier = fileToDelete.objectName || fileToDelete.name;
+      await fileService.deleteFile(identifier);
+    }
     setTrashFiles([]);
   };
 
@@ -241,48 +323,50 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const renameFile = (fileId, newName) => {
-    setFiles((prev) =>
-      prev.map((f) => (f.id === fileId ? { ...f, name: newName, updated: "Just now" } : f))
-    );
+  const renameFile = async (fileId, newName) => {
+    const fileToRename = files.find((f) => f.id === fileId);
+    if (fileToRename) {
+      const identifier = fileToRename.objectName || fileToRename.name;
+      const result = await fileService.renameFile(identifier, newName);
+      setFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, name: newName, updated: "Just now" } : f))
+      );
+    }
     closeModal();
   };
 
-  const downloadFile = (file) => {
-    // Generates a mock text/blob download in the browser
-    const dummyContent = `CloudNest Storage Service\nFile: ${file.name}\nSize: ${file.size}\nOwner: ${file.owner}\nUploaded: ${file.uploadDate}\n\nContent stored securely on CloudNest.`;
-    const blob = new Blob([dummyContent], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const downloadFile = async (file) => {
+    const identifier = file.objectName || file.name;
+    await fileService.downloadFile(identifier, file.name);
   };
 
-  // Notes Operations
-  const addNote = (newNote) => {
-    const note = {
-      id: `n-${Date.now()}`,
-      title: newNote.title || "Untitled Note",
-      content: newNote.content || "",
-      category: newNote.category || "Personal",
-      tags: newNote.tags || [],
-      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    };
-    setNotes((prev) => [note, ...prev]);
+  // Fetch user notes from backend REST API with pagination and category filter
+  const fetchUserNotes = async (page = 0, category = "all") => {
+    if (user && user.name) {
+      const res = await noteService.getUserNotes(user.name, page, notesPageSize, category);
+      if (res) {
+        setNotes(res.notes);
+        setNotesCurrentPage(res.currentPage);
+        setNotesTotalPages(res.totalPages);
+        setNotesTotalElements(res.totalElements);
+      }
+    }
   };
 
-  const updateNote = (id, updatedData) => {
-    setNotes((prev) =>
-      prev.map((note) => (note.id === id ? { ...note, ...updatedData, date: "Edited just now" } : note))
-    );
+  // Notes Operations with Spring Boot REST API
+  const addNote = async (newNote) => {
+    await noteService.saveNote(newNote, user?.name || "User");
+    await fetchUserNotes(0, newNote.category || "all");
   };
 
-  const deleteNote = (id) => {
-    setNotes((prev) => prev.filter((note) => note.id !== id));
+  const updateNote = async (id, updatedData) => {
+    await noteService.updateNote(id, updatedData, user?.name || "User");
+    await fetchUserNotes(notesCurrentPage);
+  };
+
+  const deleteNote = async (id) => {
+    await noteService.deleteNote(id);
+    await fetchUserNotes(notesCurrentPage);
   };
 
   return (
@@ -294,7 +378,17 @@ export const FileProvider = ({ children }) => {
         trashFiles,
         archiveFiles,
         notes,
+        notesCurrentPage,
+        notesTotalPages,
+        notesTotalElements,
+        notesPageSize,
+        fetchUserNotes,
         storageStats,
+        currentPage,
+        totalPages,
+        totalElements,
+        pageSize,
+        fetchUserFiles,
         searchQuery,
         setSearchQuery,
         selectedFolder,

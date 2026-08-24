@@ -7,6 +7,7 @@ import {
   Info,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   FolderOpen,
   Search,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import FileTable from "../components/FileTable";
 import UploadModal from "../components/UploadModal";
 import FileDetailsModal from "../components/FileDetailsModal";
 import UserProfile from "../components/UserProfile";
+import Pagination from "../components/Pagination";
 import { useFiles } from "../context/FileContext";
 
 const Dashboard = () => {
@@ -25,13 +27,17 @@ const Dashboard = () => {
     files,
     storageStats,
     searchQuery,
-    selectedFolder,
     fileTypeFilter,
     setFileTypeFilter,
     sortBy,
     viewMode,
     setViewMode,
     openModal,
+    currentPage,
+    totalPages,
+    totalElements,
+    pageSize,
+    fetchUserFiles,
   } = useFiles();
 
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
@@ -57,23 +63,6 @@ const Dashboard = () => {
       )
         return false;
       if (fileTypeFilter === "other" && file.type !== "other") return false;
-    }
-
-    // Folder / Collection filter
-    if (selectedFolder !== "all") {
-      if (selectedFolder === "school" && !file.location.includes("School"))
-        return false;
-      if (selectedFolder === "personal" && !file.location.includes("Personal"))
-        return false;
-      if (selectedFolder === "telkom" && !file.location.includes("Telkom"))
-        return false;
-      if (selectedFolder === "unicorn" && !file.location.includes("Unicorn"))
-        return false;
-      if (
-        selectedFolder === "tokopedia" &&
-        !file.location.includes("Tokopedia")
-      )
-        return false;
     }
 
     return true;
@@ -113,8 +102,8 @@ const Dashboard = () => {
               <StorageCard
                 title="Image Files"
                 items={`${storageStats.image.count} Items`}
-                used={`${storageStats.image.usedGB} GB`}
-                total="120 GB"
+                used={storageStats.image.usedFormatted}
+                total="5 GB"
                 type="image"
                 percent={storageStats.image.percent}
                 onClick={() =>
@@ -128,8 +117,8 @@ const Dashboard = () => {
               <StorageCard
                 title="Video Files"
                 items={`${storageStats.video.count} Items`}
-                used={`${storageStats.video.usedGB} GB`}
-                total="120 GB"
+                used={storageStats.video.usedFormatted}
+                total="5 GB"
                 type="video"
                 percent={storageStats.video.percent}
                 onClick={() =>
@@ -143,8 +132,8 @@ const Dashboard = () => {
               <StorageCard
                 title="Document Files"
                 items={`${storageStats.document.count} Items`}
-                used={`${storageStats.document.usedGB} GB`}
-                total="120 GB"
+                used={storageStats.document.usedFormatted}
+                total="5 GB"
                 type="document"
                 percent={storageStats.document.percent}
                 onClick={() =>
@@ -158,8 +147,8 @@ const Dashboard = () => {
               <StorageCard
                 title="Other Files"
                 items={`${storageStats.other.count} Items`}
-                used={`${storageStats.other.usedGB} GB`}
-                total="120 GB"
+                used={storageStats.other.usedFormatted}
+                total="5 GB"
                 type="other"
                 percent={storageStats.other.percent}
                 onClick={() =>
@@ -173,12 +162,12 @@ const Dashboard = () => {
             {/* Nuages+ Promo Banner */}
             <div className="mt-4 flex items-center gap-2 text-xs md:text-sm text-gray-400">
               <Info className="w-4 h-4 text-blue-400 shrink-0" />
-              <span>Optimize and expand your storage with Nuages+</span>
+              <span>Free tier storage quota: <strong>5.00 GB max capacity</strong>.</span>
               <button
                 onClick={() => openModal("upload")}
                 className="font-semibold text-blue-400 hover:text-blue-300 underline transition-colors"
               >
-                Try premium now
+                Upload more files
               </button>
             </div>
           </section>
@@ -192,11 +181,6 @@ const Dashboard = () => {
                   <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight font-['Hanken_Grotesk']">
                     Overview Storage
                   </h3>
-                  {selectedFolder !== "all" && (
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase">
-                      {selectedFolder}
-                    </span>
-                  )}
                   {fileTypeFilter !== "all" && (
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase">
                       {fileTypeFilter}
@@ -204,7 +188,7 @@ const Dashboard = () => {
                   )}
                 </div>
                 <p className="text-xs md:text-sm text-gray-400 mt-1">
-                  Document that you save on our storage
+                  Total <strong className="text-white">{storageStats?.overall?.totalElements || totalElements}</strong> files stored ({storageStats?.overall?.usedFormatted || "0 KB"} / 5 GB used)
                 </p>
               </div>
 
@@ -213,20 +197,27 @@ const Dashboard = () => {
                 <div className="relative">
                   <button
                     onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-                    className="flex items-center gap-2 text-gray-300 hover:text-white text-xs md:text-sm font-medium transition-colors px-3.5 py-2 rounded-xl border border-white/10 hover:bg-white/5 glass-card"
+                    className={`btn-secondary px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 transition-all ${
+                      fileTypeFilter !== "all"
+                        ? "bg-blue-600/30 text-blue-300 border-blue-500/40"
+                        : ""
+                    }`}
                   >
-                    <Filter className="w-4 h-4 text-blue-400" />
-                    <span>Filter</span>
+                    <Filter className="w-4 h-4" />
+                    <span className="capitalize">
+                      {fileTypeFilter === "all" ? "Filter" : fileTypeFilter}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 opacity-70" />
                   </button>
 
                   {filterDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-44 glass-card rounded-xl p-1.5 shadow-2xl border border-white/15 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute right-0 mt-2 w-48 glass-card rounded-2xl shadow-2xl border border-white/10 py-2 z-30 animate-in fade-in duration-150">
                       {[
-                        { label: "All Types", value: "all" },
-                        { label: "Images only", value: "image" },
-                        { label: "Videos only", value: "video" },
-                        { label: "Documents only", value: "document" },
-                        { label: "Other formats", value: "other" },
+                        { label: "All Files", value: "all" },
+                        { label: "Images Only", value: "image" },
+                        { label: "Videos Only", value: "video" },
+                        { label: "Documents Only", value: "document" },
+                        { label: "Others Only", value: "other" },
                       ].map((item) => (
                         <button
                           key={item.value}
@@ -234,10 +225,10 @@ const Dashboard = () => {
                             setFileTypeFilter(item.value);
                             setFilterDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                          className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors ${
                             fileTypeFilter === item.value
-                              ? "bg-blue-600/30 text-blue-300 border border-blue-500/30"
-                              : "text-gray-300 hover:bg-white/10 hover:text-white"
+                              ? "bg-white/10 text-white font-semibold"
+                              : "text-gray-400 hover:text-white hover:bg-white/5"
                           }`}
                         >
                           {item.label}
@@ -247,7 +238,7 @@ const Dashboard = () => {
                   )}
                 </div>
 
-                {/* View Mode Toggle (Table / Grid) */}
+                {/* View Mode Toggle */}
                 <div className="flex items-center glass-card rounded-xl p-1 border border-white/10">
                   <button
                     onClick={() => setViewMode("table")}
@@ -256,7 +247,7 @@ const Dashboard = () => {
                         ? "bg-white/10 text-white shadow-sm border border-white/10"
                         : "text-gray-400 hover:text-white"
                     }`}
-                    title="List View"
+                    title="Table View"
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -275,17 +266,18 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Quick Access Cards Row (Matching Reference 2) */}
-            {searchQuery === "" && fileTypeFilter === "all" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 relative z-10">
-                {quickAccessFiles.map((file) => (
-                  <FileCard key={`quick-${file.id}`} file={file} />
-                ))}
+            {/* Display Files */}
+            {sortedFiles.length === 0 ? (
+              <div className="flex-1 min-h-[220px] rounded-2xl border border-dashed border-white/15 bg-white/5 p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3">
+                  <FolderOpen className="w-7 h-7 text-gray-500" />
+                </div>
+                <h4 className="text-white font-semibold text-base mb-1">No files found</h4>
+                <p className="text-gray-400 text-sm max-w-sm">
+                  Upload files to your cloud storage to start organizing documents.
+                </p>
               </div>
-            )}
-
-            {/* Main File Table or Grid View */}
-            {viewMode === "table" ? (
+            ) : viewMode === "table" ? (
               <FileTable files={sortedFiles} />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -294,6 +286,15 @@ const Dashboard = () => {
                 ))}
               </div>
             )}
+
+            {/* Pagination Controls */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={pageSize}
+              onPageChange={(page) => fetchUserFiles(page)}
+            />
           </section>
         </div>
       </main>

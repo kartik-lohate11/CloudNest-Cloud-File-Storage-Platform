@@ -2,8 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { X, LogOut, Settings, ShieldCheck, HardDrive, Mail } from "lucide-react";
 import { useFiles } from "../context/FileContext";
 
+const getInitials = (name) => {
+  if (!name) return "CN";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
 const UserProfile = () => {
-  const { modalState, closeModal, user } = useFiles();
+  const { modalState, closeModal, user, storageStats } = useFiles();
   const navigate = useNavigate();
 
   if (!modalState.isOpen || modalState.type !== "userProfile") return null;
@@ -12,11 +21,6 @@ const UserProfile = () => {
     localStorage.removeItem("cloudnest_token");
     closeModal();
     navigate("/login");
-  };
-
-  const handleSettingsClick = () => {
-    closeModal();
-    navigate("/settings");
   };
 
   return (
@@ -32,14 +36,10 @@ const UserProfile = () => {
           <X className="w-5 h-5" />
         </button>
 
-        {/* User Avatar */}
+        {/* User Initials Avatar */}
         <div className="relative inline-block mx-auto mb-4">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-            <img
-              src={user.avatar}
-              alt={user.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.4)] flex items-center justify-center font-extrabold text-white text-2xl tracking-wider">
+            {getInitials(user?.name || user?.email || "Kartik Lohate")}
           </div>
           <div className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 rounded-full border-2 border-[#0b0c16] flex items-center justify-center">
             <ShieldCheck className="w-3 h-3 text-white" />
@@ -48,14 +48,14 @@ const UserProfile = () => {
 
         {/* User Info */}
         <h3 className="text-lg font-bold text-white font-['Hanken_Grotesk']">
-          {user.name}
+          {user?.name || "CloudNest User"}
         </h3>
         <p className="text-xs text-gray-400 flex items-center justify-center gap-1.5 mt-1">
           <Mail className="w-3.5 h-3.5 text-blue-400" />
-          <span>{user.email}</span>
+          <span>{user?.email || "user@cloudnest.io"}</span>
         </p>
         <div className="inline-block mt-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
-          {user.plan}
+          Standard 5 GB Capacity
         </div>
 
         {/* Mini Storage Indicator */}
@@ -65,23 +65,20 @@ const UserProfile = () => {
               <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
               Cloud Quota
             </span>
-            <span className="text-white font-semibold">80 GB / 120 GB</span>
+            <span className="text-white font-semibold">
+              {storageStats?.overall?.usedFormatted || "0 KB"} / 5 GB
+            </span>
           </div>
           <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full w-[66%]" />
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+              style={{ width: `${Math.min(Math.max(storageStats?.overall?.percent || 5, 5), 100)}%` }}
+            />
           </div>
         </div>
 
         {/* Actions */}
         <div className="mt-5 space-y-2">
-          <button
-            onClick={handleSettingsClick}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium text-white transition-colors"
-          >
-            <Settings className="w-4 h-4 text-gray-400" />
-            <span>Account Settings</span>
-          </button>
-
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-xs font-medium text-red-400 transition-colors"

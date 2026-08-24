@@ -7,8 +7,8 @@ import { useFiles } from "../context/FileContext";
 const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useFiles();
-  const [email, setEmail] = useState("kartiklohate8@gmail.com");
-  const [password, setPassword] = useState("••••••••");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -20,16 +20,20 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await authService.login({ email, password, rememberMe });
+      const response = await authService.login({ userName: email, password, rememberMe });
       if (response && response.token) {
         localStorage.setItem("cloudnest_token", response.token);
         if (response.user) {
           setUser((prev) => ({ ...prev, ...response.user }));
         }
         navigate("/");
+      } else {
+        setError("Invalid login credentials. Please try again.");
       }
-    } catch {
-      setError("Invalid login credentials. Please try again.");
+    } catch (err) {
+      console.error("Login submission error:", err);
+      const errMsg = err?.response?.data?.message || err?.message || "Invalid login credentials. Please try again.";
+      setError(errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -37,6 +41,24 @@ const Login = () => {
 
   return (
     <main className="flex w-full min-h-screen bg-[#0b0c16] text-white">
+
+      {/* Right Section: Branding & Visuals (Matching Reference 1 exactly) */}
+      <section className="hidden lg:flex w-1/2 relative login-abstract-bg items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-black/10 z-0" />
+        <div className="relative z-10 text-center flex flex-col items-center p-12">
+          {/* Cloud Logo */}
+          <div className="w-18 h-18 bg-white/20 backdrop-blur-md rounded-2xl mb-6 flex items-center justify-center shadow-2xl border border-white/20 animate-bounce duration-1000">
+            <Cloud className="w-10 h-10 text-white" />
+          </div>
+          {/* Branding Title */}
+          <h2 className="text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg font-['Hanken_Grotesk']">
+            CloudNest
+          </h2>
+          <p className="text-xl text-white/90 font-medium tracking-wide drop-shadow">
+            The future of storage is here.
+          </p>
+        </div>
+      </section>
       {/* Left Section: Login Form */}
       <section className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-16 relative bg-[#0b0c16] min-h-screen">
         {/* Subtle glow */}
@@ -62,13 +84,13 @@ const Login = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Input */}
+            {/* Email or Username Input */}
             <div>
               <label
                 htmlFor="email"
                 className="block text-xs font-semibold text-gray-300 mb-1.5 uppercase tracking-wider"
               >
-                Email
+                Email or Username
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -76,11 +98,11 @@ const Login = () => {
                 </div>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
+                  placeholder="Enter email or username"
                   className="dark-input block w-full pl-10 pr-3.5 py-2.5 rounded-xl text-sm text-gray-200 placeholder-gray-500 focus:border-blue-500"
                 />
               </div>
@@ -230,24 +252,6 @@ const Login = () => {
             >
               Sign up
             </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* Right Section: Branding & Visuals (Matching Reference 1 exactly) */}
-      <section className="hidden lg:flex w-1/2 relative login-abstract-bg items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/10 z-0" />
-        <div className="relative z-10 text-center flex flex-col items-center p-12">
-          {/* Cloud Logo */}
-          <div className="w-18 h-18 bg-white/20 backdrop-blur-md rounded-2xl mb-6 flex items-center justify-center shadow-2xl border border-white/20 animate-bounce duration-1000">
-            <Cloud className="w-10 h-10 text-white" />
-          </div>
-          {/* Branding Title */}
-          <h2 className="text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg font-['Hanken_Grotesk']">
-            CloudNest
-          </h2>
-          <p className="text-xl text-white/90 font-medium tracking-wide drop-shadow">
-            The future of storage is here.
           </p>
         </div>
       </section>

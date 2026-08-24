@@ -32,22 +32,6 @@ const Sidebar = () => {
     { name: "Trash", path: "/trash", icon: Trash2, badge: trashFiles.length },
   ];
 
-  const personalCollections = [
-    { name: "School Collections", color: "#10B981", folder: "school" },
-    { name: "Personal Collections", color: "#F59E0B", folder: "personal" },
-  ];
-
-  const workspaceCollections = [
-    { name: "Telkom Collections", color: "#EF4444", folder: "telkom" },
-    { name: "Unicorn Collections", color: "#8B5CF6", folder: "unicorn" },
-    { name: "Tokopedia Collections", color: "#10B981", folder: "tokopedia" },
-  ];
-
-  const handleCollectionClick = (folderKey) => {
-    setSelectedFolder(selectedFolder === folderKey ? "all" : folderKey);
-    setSidebarOpen(false);
-  };
-
   return (
     <>
       {/* Mobile Backdrop */}
@@ -123,82 +107,6 @@ const Sidebar = () => {
                 </NavLink>
               );
             })}
-          </div>
-
-          {/* Personal File Section */}
-          <div className="pt-2">
-            <div className="flex items-center justify-between px-4 mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Personal File
-              </span>
-              <button
-                title="Add Collection"
-                className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
-                onClick={() => handleCollectionClick("personal")}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {personalCollections.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => handleCollectionClick(item.folder)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all text-left group ${
-                    selectedFolder === item.folder
-                      ? "bg-white/10 text-white font-medium border border-white/10"
-                      : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{
-                      backgroundColor: item.color,
-                      boxShadow: `0 0 8px ${item.color}80`,
-                    }}
-                  />
-                  <span className="truncate">{item.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Workspace File Section */}
-          <div className="pt-2">
-            <div className="flex items-center justify-between px-4 mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                Workspace File
-              </span>
-              <button
-                title="Add Workspace Collection"
-                className="text-gray-500 hover:text-white transition-colors p-1 rounded hover:bg-white/5"
-                onClick={() => handleCollectionClick("workspace")}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-1">
-              {workspaceCollections.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => handleCollectionClick(item.folder)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all text-left group ${
-                    selectedFolder === item.folder
-                      ? "bg-white/10 text-white font-medium border border-white/10"
-                      : "text-gray-400 hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{
-                      backgroundColor: item.color,
-                      boxShadow: `0 0 8px ${item.color}80`,
-                    }}
-                  />
-                  <span className="truncate">{item.name}</span>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 

@@ -100,7 +100,7 @@ const Trash = () => {
                         </td>
 
                         <td className="py-4 px-6 text-gray-400 text-xs truncate max-w-xs">
-                          {file.location || "/Personal File/Personal Collections"}
+                          cloudnest
                         </td>
 
                         <td className="py-4 px-6 text-gray-400 text-xs whitespace-nowrap font-medium">

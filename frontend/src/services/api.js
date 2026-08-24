@@ -21,220 +21,107 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Initial Mock Files Data based on design specifications
-export const INITIAL_FILES = [
-  {
-    id: "f-1",
-    name: "holiday-01.jpeg",
-    type: "image",
-    extension: "jpeg",
-    size: "11.56 MB",
-    sizeBytes: 12121538,
-    uploadDate: "12 Jan 2024",
-    updated: "3 days ago",
-    location: "/Personal File/School Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: true,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-2",
-    name: "sem-report.docx",
-    type: "document",
-    extension: "docx",
-    size: "111.56 KB",
-    sizeBytes: 114237,
-    uploadDate: "10 Jan 2024",
-    updated: "5 days ago",
-    location: "/Personal File/Personal Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: true,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-3",
-    name: "prototype-vid.mp4",
-    type: "video",
-    extension: "mp4",
-    size: "1.56 GB",
-    sizeBytes: 1675037245,
-    uploadDate: "05 Jan 2024",
-    updated: "1 week ago",
-    location: "/Workspace File/Unicorn Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: true,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-4",
-    name: "supersemaret.pdf",
-    type: "pdf",
-    extension: "pdf",
-    size: "112.56 MB",
-    sizeBytes: 118029516,
-    uploadDate: "02 Jan 2024",
-    updated: "2 weeks ago",
-    location: "/Workspace File/Telkom Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: true,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-5",
-    name: "good-memories.png",
-    type: "image",
-    extension: "png",
-    size: "15.7 MB",
-    sizeBytes: 16462643,
-    uploadDate: "17 Aug 2023",
-    updated: "2 Month ago",
-    location: "/Personal File/Personal Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-6",
-    name: "data-webtech.pdf",
-    type: "pdf",
-    extension: "pdf",
-    size: "17.5 MB",
-    sizeBytes: 18350080,
-    uploadDate: "30 Aug 2023",
-    updated: "1 Month ago",
-    location: "/Workspace File/Telkom Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-7",
-    name: "live-report.docx",
-    type: "document",
-    extension: "docx",
-    size: "34.7 MB",
-    sizeBytes: 36385587,
-    uploadDate: "31 Aug 2023",
-    updated: "1 Month ago",
-    location: "/Workspace File/Tokopedia Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-8",
-    name: "valorant.apk",
-    type: "other",
-    extension: "apk",
-    size: "105.7 MB",
-    sizeBytes: 110834483,
-    uploadDate: "10 Sept 2023",
-    updated: "4 Week ago",
-    location: "/Personal File/School Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-9",
-    name: "old-memories.mov",
-    type: "video",
-    extension: "mov",
-    size: "505.7 MB",
-    sizeBytes: 530264883,
-    uploadDate: "17 Sept 2023",
-    updated: "3 Week ago",
-    location: "/Personal File/Personal Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-  {
-    id: "f-10",
-    name: "good-girl.jpeg",
-    type: "image",
-    extension: "jpeg",
-    size: "100.8 MB",
-    sizeBytes: 105696460,
-    uploadDate: "24 Sept 2023",
-    updated: "2 Week ago",
-    location: "/Workspace File/Unicorn Collections",
-    owner: "Kartik Lohate",
-    isQuickAccess: false,
-    isArchived: false,
-    isTrash: false,
-  },
-];
+// Dynamic storage state constants
+export const INITIAL_FILES = [];
+export const INITIAL_NOTES = [];
 
-export const INITIAL_NOTES = [
-  {
-    id: "n-1",
-    title: "Sprint Planning & Cloud Architecture",
-    content: "Review MinIO object storage integration, configure multipart uploads for files > 50MB, and verify JWT token refresh cycle on Spring Boot endpoints.",
-    category: "Workspace",
-    date: "14 Jan 2024",
-    tags: ["architecture", "backend"],
-  },
-  {
-    id: "n-2",
-    title: "School Research Papers to Review",
-    content: "Collect citations on distributed file systems, Raft consensus algorithm, and erasure coding for durable multi-region storage.",
-    category: "School",
-    date: "10 Jan 2024",
-    tags: ["research", "systems"],
-  },
-  {
-    id: "n-3",
-    title: "Design System Guidelines",
-    content: "Ensure all cards use 16px radius with glassmorphism blur(12px) and glowing borders on hover. Hanken Grotesk for headings, Plus Jakarta Sans for body.",
-    category: "Personal",
-    date: "04 Jan 2024",
-    tags: ["ui", "design"],
-  },
-];
+// Helper to transform Spring Boot FileMetaDataDto into frontend file model
+export const transformBackendFile = (backendFile) => {
+  if (!backendFile) return null;
+  const ext = (backendFile.extension || "").toLowerCase();
+  let type = "other";
+  if (["jpg", "jpeg", "png", "webp", "gif", "svg"].includes(ext)) type = "image";
+  else if (["mp4", "mov", "mkv", "avi", "webm"].includes(ext)) type = "video";
+  else if (["pdf"].includes(ext)) type = "pdf";
+  else if (["doc", "docx", "txt", "xlsx", "xls", "csv", "ppt", "pptx"].includes(ext)) type = "document";
+
+  const sizeBytes = backendFile.size || 0;
+  const sizeStr = sizeBytes > 1024 * 1024 * 1024
+    ? `${(sizeBytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
+    : sizeBytes > 1024 * 1024
+    ? `${(sizeBytes / (1024 * 1024)).toFixed(2)} MB`
+    : `${(sizeBytes / 1024).toFixed(2)} KB`;
+
+  return {
+    id: backendFile.id ? `db-${backendFile.id}` : backendFile.objectName || `f-${Date.now()}`,
+    name: backendFile.originalFileName || backendFile.objectName || "Untitled File",
+    objectName: backendFile.objectName,
+    type,
+    extension: ext,
+    size: sizeStr,
+    sizeBytes,
+    uploadDate: backendFile.createdAt
+      ? new Date(backendFile.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+      : "Recently",
+    updated: "Recently",
+    location: "cloudnest",
+    owner: "User",
+    isQuickAccess: true,
+    isArchived: false,
+    isTrash: false,
+  };
+};
 
 // Service Layer Endpoints Prepared for Backend Integration
 export const authService = {
   login: async (credentials) => {
     try {
-      const response = await api.post("/api/auth/login", credentials);
-      return response.data;
-    } catch {
-      // Fallback mock authentication
+      const response = await api.post("/user/api/verify", {
+        userName: credentials.userName || credentials.email,
+        password: credentials.password,
+      });
+
+      const userData = response.data;
+      if (!userData) {
+        throw new Error("No response data received from server");
+      }
+
       return {
-        token: "mock-jwt-token-cloudnest",
+        token: `cloudnest-token-${userData.id || Date.now()}`,
         user: {
-          name: "Kartik Lohate",
-          email: credentials.email || "kartiklohate8@gmail.com",
-          role: "Pro Administrator",
+          id: userData.id,
+          name: userData.userName || userData.name,
+          email: userData.mail || userData.email,
+          role: "Pro User",
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          plan: "Pro 100 GB Plan",
         },
+        data: userData,
       };
+    } catch (error) {
+      console.error("Backend API verify error:", error);
+      throw error;
     }
   },
 
   signup: async (userData) => {
     try {
-      const response = await api.post("/api/auth/signup", userData);
-      return response.data;
-    } catch {
+      const response = await api.post("/user/api/create", {
+        userName: userData.userName || userData.name,
+        mail: userData.email,
+        password: userData.password,
+      });
+
+      const data = response.data;
+      if (!data) {
+        throw new Error("No response data received from server");
+      }
+
       return {
-        token: "mock-jwt-token-cloudnest",
+        token: `cloudnest-token-${data.id || Date.now()}`,
         user: {
-          name: userData.name || "Kartik Lohate",
-          email: userData.email,
+          id: data.id,
+          name: data.userName || data.name,
+          email: data.mail || data.email,
           role: "Pro User",
+          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+          plan: "Pro 100 GB Plan",
         },
+        data: data,
       };
+    } catch (error) {
+      console.error("Backend API create error:", error);
+      throw error;
     }
   },
 
@@ -249,88 +136,144 @@ export const authService = {
 };
 
 export const fileService = {
-  getFiles: async (params = {}) => {
+  getUserFiles: async (userName, page = 0, size = 20) => {
     try {
-      const response = await api.get("/api/files", { params });
-      return response.data;
-    } catch {
-      return null;
+      const response = await api.get(`/file/api/user/${userName}?page=${page}&size=${size}`);
+      const data = response.data || {};
+      const rawContent = data.content || (Array.isArray(data) ? data : []);
+      const mappedFiles = rawContent.map(transformBackendFile).filter(Boolean);
+
+      return {
+        files: mappedFiles,
+        currentPage: data.currentPage || 0,
+        totalElements: data.totalElements !== undefined ? data.totalElements : mappedFiles.length,
+        totalPages: data.totalPages !== undefined ? data.totalPages : 1,
+        pageSize: data.pageSize || 20,
+        totalStorageUsedBytes: data.totalStorageUsedBytes || 0,
+        categoryStats: data.categoryStats || null,
+      };
+    } catch (error) {
+      console.warn("Failed to fetch user files from backend:", error?.message);
+      return {
+        files: [],
+        currentPage: 0,
+        totalElements: 0,
+        totalPages: 0,
+        pageSize: 20,
+        totalStorageUsedBytes: 0,
+        categoryStats: null,
+      };
     }
   },
 
-  uploadFile: async (formData) => {
+  uploadFile: async (file, userName) => {
     try {
-      const response = await api.post("/api/files/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await api.post("/file/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          userName: userName,
+        },
       });
-      return response.data;
-    } catch {
+      return transformBackendFile(response.data);
+    } catch (error) {
+      console.warn("Failed to upload file to backend:", error?.message);
       return null;
     }
   },
 
-  getFile: async (id) => {
+  downloadFile: async (identifier, originalFileName) => {
     try {
-      const response = await api.get(`/api/files/${id}`);
-      return response.data;
-    } catch {
-      return null;
-    }
-  },
-
-  downloadFile: async (id) => {
-    try {
-      const response = await api.get(`/api/files/${id}/download`, {
+      const response = await api.get(`/file/api/download/${identifier}`, {
         responseType: "blob",
       });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", originalFileName || identifier);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return true;
+    } catch (error) {
+      console.warn("Failed to download file from backend:", error?.message);
+      return false;
+    }
+  },
+
+  deleteFile: async (identifier) => {
+    try {
+      const response = await api.delete(`/file/api/delete/${identifier}`);
       return response.data;
-    } catch {
+    } catch (error) {
+      console.warn("Failed to delete file on backend:", error?.message);
       return null;
     }
   },
 
-  deleteFile: async (id) => {
+  renameFile: async (identifier, newName) => {
     try {
-      const response = await api.delete(`/api/files/${id}`);
-      return response.data;
-    } catch {
-      return { success: true };
+      const response = await api.put(`/file/api/rename/${identifier}?newName=${encodeURIComponent(newName)}`);
+      return transformBackendFile(response.data);
+    } catch (error) {
+      console.warn("Failed to rename file on backend:", error?.message);
+      return null;
+    }
+  },
+};
+
+export const noteService = {
+  getUserNotes: async (userName, page = 0, size = 20, category = "all") => {
+    try {
+      const catParam = category && category !== "all" ? `&category=${encodeURIComponent(category)}` : "";
+      const response = await api.get(`/file/api/notes/user/${userName}?page=${page}&size=${size}${catParam}`);
+      const data = response.data || {};
+      return {
+        notes: data.content || [],
+        currentPage: data.currentPage || 0,
+        totalElements: data.totalElements || 0,
+        totalPages: data.totalPages || 0,
+        pageSize: data.pageSize || 20,
+      };
+    } catch (error) {
+      console.warn("Failed to fetch notes from backend:", error?.message);
+      return { notes: [], currentPage: 0, totalElements: 0, totalPages: 0, pageSize: 20 };
     }
   },
 
-  updateFile: async (id, data) => {
+  saveNote: async (noteData, userName) => {
     try {
-      const response = await api.put(`/api/files/${id}`, data);
+      const response = await api.post("/file/api/notes", noteData, {
+        headers: { userName: userName || "User" },
+      });
       return response.data;
-    } catch {
-      return { success: true, data };
-    }
-  },
-
-  getTrash: async () => {
-    try {
-      const response = await api.get("/api/files/trash");
-      return response.data;
-    } catch {
+    } catch (error) {
+      console.warn("Failed to save note on backend:", error?.message);
       return null;
     }
   },
 
-  restoreFile: async (id) => {
+  updateNote: async (id, noteData, userName) => {
     try {
-      const response = await api.put(`/api/files/${id}/restore`);
+      const response = await api.put(`/file/api/notes/${id}`, noteData, {
+        headers: { userName: userName || "User" },
+      });
       return response.data;
-    } catch {
-      return { success: true };
+    } catch (error) {
+      console.warn("Failed to update note on backend:", error?.message);
+      return null;
     }
   },
 
-  permanentDelete: async (id) => {
+  deleteNote: async (id) => {
     try {
-      const response = await api.delete(`/api/files/${id}/permanent`);
+      const response = await api.delete(`/file/api/notes/${id}`);
       return response.data;
-    } catch {
-      return { success: true };
+    } catch (error) {
+      console.warn("Failed to delete note on backend:", error?.message);
+      return null;
     }
   },
 };

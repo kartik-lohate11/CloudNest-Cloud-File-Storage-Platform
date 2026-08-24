@@ -51,7 +51,6 @@ const Settings = () => {
 
   const tabs = [
     { id: "profile", label: "Profile & Identity", icon: User },
-    { id: "account", label: "Account & Plan", icon: HardDrive },
     { id: "security", label: "Security & Keys", icon: Shield },
     { id: "backend", label: "Spring Boot & MinIO", icon: Server },
     { id: "notifications", label: "Notifications", icon: Bell },
@@ -115,18 +114,12 @@ const Settings = () => {
                 </h3>
 
                 <div className="flex items-center gap-4 pb-4 border-b border-white/10">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500 shadow-md">
-                    <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 border-2 border-blue-500 shadow-md flex items-center justify-center font-extrabold text-white text-xl">
+                    {name ? (name.trim().split(/\s+/).length >= 2 ? (name.trim().split(/\s+/)[0][0] + name.trim().split(/\s+/)[name.trim().split(/\s+/).length - 1][0]).toUpperCase() : name.substring(0, 2).toUpperCase()) : "CN"}
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-white">{user.name}</h4>
                     <p className="text-xs text-gray-400">{user.email}</p>
-                    <button
-                      type="button"
-                      className="mt-2 text-xs font-semibold text-blue-400 hover:text-blue-300"
-                    >
-                      Change Avatar
-                    </button>
                   </div>
                 </div>
 
@@ -165,39 +158,6 @@ const Settings = () => {
                       onChange={(e) => setRole(e.target.value)}
                       className="w-full dark-input rounded-xl py-2.5 px-4 text-xs text-white"
                     />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Account & Plan Tab */}
-            {activeTab === "account" && (
-              <div className="glass-card rounded-2xl p-6 space-y-5 border border-white/10">
-                <h3 className="text-base font-bold text-white font-['Hanken_Grotesk']">
-                  Storage Subscription & Quota
-                </h3>
-
-                <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-blue-400 uppercase">Current Tier</span>
-                    <h4 className="text-lg font-bold text-white mt-0.5">{user.plan}</h4>
-                    <p className="text-xs text-gray-400 mt-1">120 GB total storage capacity</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-gradient px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-md"
-                  >
-                    Upgrade Plan
-                  </button>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>Used Space: 80 GB</span>
-                    <span className="text-white font-medium">Free: 40 GB</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full w-[66%]" />
                   </div>
                 </div>
               </div>

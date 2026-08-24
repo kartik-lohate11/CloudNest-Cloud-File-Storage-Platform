@@ -1,23 +1,25 @@
 import { useState, useRef } from "react";
 import {
-  UploadCloud,
   X,
+  Upload,
   FileText,
   Image as ImageIcon,
   Video,
   CheckCircle2,
-  Trash2,
+  AlertTriangle,
   Folder,
+  UploadCloud,
+  Trash2,
 } from "lucide-react";
 import { useFiles } from "../context/FileContext";
 
 const UploadModal = () => {
-  const { modalState, closeModal, uploadFiles } = useFiles();
+  const { modalState, closeModal, uploadFiles, storageStats } = useFiles();
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [targetFolder, setTargetFolder] = useState("/Personal File/Personal Collections");
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
 
   if (!modalState.isOpen || modalState.type !== "upload") return null;
@@ -47,28 +49,85 @@ const UploadModal = () => {
   };
 
   const handleFiles = (newFiles) => {
-    setSelectedFiles((prev) => [...prev, ...newFiles]);
+    setUploadError("");
+    const updated = [...selectedFiles, ...newFiles];
+    if (updated.length > 10) {
+      setUploadError("Maximum 10 files can be uploaded at a time.");
+    }
+    setSelectedFiles(updated.slice(0, 10));
   };
 
   const removeFile = (index) => {
+    setUploadError("");
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleUploadSubmit = () => {
     if (selectedFiles.length === 0) return;
+    setUploadError("");
+
+    // 1. Check max 10 files
+    if (selectedFiles.length > 10) {
+      setUploadError("Maximum 10 files can be uploaded at a time.");
+      return;
+    }
+
+    const MAX_SINGLE_FILE_BYTES = 100 * 1024 * 1024; // 100 MB
+    const MAX_BATCH_BYTES = 100 * 1024 * 1024; // 100 MB
+
+    // 2. Check individual file sizes <= 100 MB
+    for (const f of selectedFiles) {
+      if (f.size > MAX_SINGLE_FILE_BYTES) {
+        const fileMB = (f.size / (1024 * 1024)).toFixed(2);
+        setUploadError(
+          `File "${f.name}" (${fileMB} MB) exceeds the maximum allowed size of 100 MB per file.`
+        );
+        return;
+      }
+    }
+
+    // 3. Check total batch size <= 100 MB
+    const newFilesSizeBytes = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+    if (newFilesSizeBytes > MAX_BATCH_BYTES) {
+      const batchMB = (newFilesSizeBytes / (1024 * 1024)).toFixed(2);
+      setUploadError(
+        `Batch upload limit exceeded! Maximum 100 MB per batch allowed (Your selected batch totals ${batchMB} MB).`
+      );
+      return;
+    }
+
+    // 4. Check total user 5 GB quota
+    const usedBytes = storageStats?.overall?.usedBytes || 0;
+    const maxBytes = storageStats?.overall?.maxBytes || 5 * 1024 * 1024 * 1024;
+
+    if (usedBytes + newFilesSizeBytes > maxBytes) {
+      const remainingBytes = Math.max(0, maxBytes - usedBytes);
+      const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
+      const newFilesMB = (newFilesSizeBytes / (1024 * 1024)).toFixed(2);
+      setUploadError(
+        `Storage limit exceeded! You have ${remainingMB} MB remaining of your 5 GB limit. Your selected files total ${newFilesMB} MB.`
+      );
+      return;
+    }
+
     setIsUploading(true);
 
-    // Simulate network latency / upload progress
-    setTimeout(() => {
-      uploadFiles(selectedFiles, targetFolder);
-      setIsUploading(false);
-      setUploadSuccess(true);
-      setTimeout(() => {
-        setUploadSuccess(false);
-        setSelectedFiles([]);
-        closeModal();
-      }, 1000);
-    }, 800);
+    // Upload files to MinIO storage via backend API
+    uploadFiles(selectedFiles)
+      .then(() => {
+        setIsUploading(false);
+        setUploadSuccess(true);
+        setTimeout(() => {
+          setUploadSuccess(false);
+          setSelectedFiles([]);
+          closeModal();
+        }, 1000);
+      })
+      .catch((err) => {
+        setIsUploading(false);
+        const errMsg = err?.response?.data?.message || err?.message || "Storage limit exceeded or upload failed.";
+        setUploadError(errMsg);
+      });
   };
 
   const formatFileSize = (bytes) => {
@@ -116,37 +175,6 @@ const UploadModal = () => {
           </p>
         </div>
 
-        {/* Folder Destination Selector */}
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">
-            Destination Location
-          </label>
-          <div className="relative">
-            <Folder className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <select
-              value={targetFolder}
-              onChange={(e) => setTargetFolder(e.target.value)}
-              className="w-full dark-input rounded-xl py-2.5 pl-10 pr-4 text-xs text-white appearance-none cursor-pointer focus:border-blue-500"
-            >
-              <option value="/Personal File/Personal Collections" className="bg-[#121320] text-white">
-                Personal File / Personal Collections
-              </option>
-              <option value="/Personal File/School Collections" className="bg-[#121320] text-white">
-                Personal File / School Collections
-              </option>
-              <option value="/Workspace File/Telkom Collections" className="bg-[#121320] text-white">
-                Workspace File / Telkom Collections
-              </option>
-              <option value="/Workspace File/Unicorn Collections" className="bg-[#121320] text-white">
-                Workspace File / Unicorn Collections
-              </option>
-              <option value="/Workspace File/Tokopedia Collections" className="bg-[#121320] text-white">
-                Workspace File / Tokopedia Collections
-              </option>
-            </select>
-          </div>
-        </div>
-
         {/* Drag & Drop Area */}
         <div
           onDragOver={handleDragOver}
@@ -176,7 +204,7 @@ const UploadModal = () => {
             Click to browse or drag and drop files here
           </p>
           <p className="text-gray-400 text-xs">
-            Supports PDF, DOCX, XLSX, CSV, PNG, JPG, MP4, ZIP (up to 5 GB)
+            Max 10 files per batch • Up to 100 MB batch size • 5 GB account limit
           </p>
         </div>
 
@@ -218,11 +246,19 @@ const UploadModal = () => {
           </div>
         )}
 
+        {/* Upload Error / Quota Exceeded Alert */}
+        {uploadError && (
+          <div className="mt-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 flex items-start gap-2.5 text-red-400 text-xs">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{uploadError}</span>
+          </div>
+        )}
+
         {/* Upload Success Feedback */}
         {uploadSuccess && (
           <div className="mt-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-2 text-emerald-400 text-xs">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Files uploaded successfully to {targetFolder}!</span>
+            <span>Files uploaded successfully to CloudNest!</span>
           </div>
         )}
 

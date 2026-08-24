@@ -27,7 +27,6 @@ function App() {
           <Route path="/notes" element={<Notes />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/trash" element={<Trash />} />
-          <Route path="/settings" element={<Settings />} />
           <Route path="/help" element={<HelpCenter />} />
 
           {/* Catch-all fallback */}

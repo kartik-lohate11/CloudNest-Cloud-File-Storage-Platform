@@ -1,18 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Edit3, Trash2, Tag, Calendar, Sparkles, X, Check } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import UploadModal from "../components/UploadModal";
 import FileDetailsModal from "../components/FileDetailsModal";
 import UserProfile from "../components/UserProfile";
+import Pagination from "../components/Pagination";
 import { useFiles } from "../context/FileContext";
 
 const Notes = () => {
-  const { notes, addNote, updateNote, deleteNote } = useFiles();
+  const {
+    notes,
+    addNote,
+    updateNote,
+    deleteNote,
+    user,
+    notesCurrentPage,
+    notesTotalPages,
+    notesTotalElements,
+    notesPageSize,
+    fetchUserNotes,
+  } = useFiles();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isCreating, setIsCreating] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
+
+  useEffect(() => {
+    fetchUserNotes(0, selectedCategory);
+  }, [selectedCategory, user?.name]);
 
   // Form State
   const [title, setTitle] = useState("");
@@ -67,13 +83,17 @@ const Notes = () => {
     setEditingNoteId(null);
   };
 
-  const filteredNotes = notes.filter((n) => {
-    const matchesSearch =
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredNotes = (notes || []).filter((n) => {
+    if (!n) return false;
+    const titleText = (n.title || "").toLowerCase();
+    const contentText = (n.content || "").toLowerCase();
+    const query = (searchQuery || "").toLowerCase();
+
+    const matchesSearch = titleText.includes(query) || contentText.includes(query);
+    const categoryText = (n.category || "").toLowerCase();
     const matchesCategory =
-      selectedCategory === "all" ||
-      n.category.toLowerCase() === selectedCategory.toLowerCase();
+      selectedCategory === "all" || categoryText === selectedCategory.toLowerCase();
+
     return matchesSearch && matchesCategory;
   });
 
@@ -210,6 +230,15 @@ const Notes = () => {
               <p className="text-xs mt-1">Create your first note to start organizing ideas.</p>
             </div>
           )}
+
+          {/* Notes Pagination Controls */}
+          <Pagination
+            currentPage={notesCurrentPage}
+            totalPages={notesTotalPages}
+            totalElements={notesTotalElements}
+            pageSize={notesPageSize}
+            onPageChange={(page) => fetchUserNotes(page, selectedCategory)}
+          />
         </div>
       </main>
 

@@ -3,5 +3,5 @@ package com.cloud.CloudNest.config;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class BeanConfig {
+public class AppConfig {
 }

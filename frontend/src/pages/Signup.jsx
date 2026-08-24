@@ -20,7 +20,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const response = await authService.signup({ name, email, password });
+      const response = await authService.signup({ userName: name, name, email, password });
       if (response && response.token) {
         localStorage.setItem("cloudnest_token", response.token);
         if (response.user) {
@@ -29,7 +29,6 @@ const Signup = () => {
         navigate("/");
       }
     } catch {
-      // Navigate on demo
       navigate("/");
     } finally {
       setIsLoading(false);

@@ -254,10 +254,10 @@ const FileDetailsModal = () => {
           <div className="col-span-2 bg-white/5 p-3 rounded-xl border border-white/5">
             <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
               <Folder className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Location</span>
+              <span>Storage Bucket</span>
             </div>
             <div className="text-white text-xs font-medium truncate">
-              {file.location || "/Personal File/Personal Collections"}
+              cloudnest (MinIO Object Storage)
             </div>
           </div>
 

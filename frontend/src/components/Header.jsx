@@ -2,14 +2,21 @@ import { useState } from "react";
 import {
   Search,
   SlidersHorizontal,
-  Calendar,
   ChevronDown,
   ArrowUpDown,
-  Bell,
   UploadCloud,
   Menu,
 } from "lucide-react";
 import { useFiles } from "../context/FileContext";
+
+const getInitials = (name) => {
+  if (!name) return "CN";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 
 const Header = () => {
   const {
@@ -23,17 +30,6 @@ const Header = () => {
   } = useFiles();
 
   const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showDateMenu, setShowDateMenu] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState("January 2024");
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const months = [
-    "January 2024",
-    "December 2023",
-    "November 2023",
-    "October 2023",
-    "September 2023",
-  ];
 
   const sortOptions = [
     { label: "Newest First", value: "date-desc" },
@@ -89,49 +85,10 @@ const Header = () => {
 
       {/* Right Action Controls */}
       <div className="flex items-center gap-2 md:gap-3 ml-auto">
-        {/* Date Filter Dropdown */}
-        <div className="relative hidden lg:block">
-          <button
-            onClick={() => {
-              setShowDateMenu(!showDateMenu);
-              setShowSortMenu(false);
-            }}
-            className="flex items-center gap-2 text-gray-300 hover:text-white text-sm font-medium transition-colors px-3.5 py-2 rounded-xl hover:bg-white/5 border border-white/5"
-          >
-            <Calendar className="w-4 h-4 text-blue-400" />
-            <span>{selectedMonth}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          </button>
-
-          {showDateMenu && (
-            <div className="absolute right-0 mt-2 w-48 glass-card rounded-xl p-1.5 shadow-2xl border border-white/10 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              {months.map((m) => (
-                <button
-                  key={m}
-                  onClick={() => {
-                    setSelectedMonth(m);
-                    setShowDateMenu(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    selectedMonth === m
-                      ? "bg-blue-600/30 text-blue-300 border border-blue-500/30"
-                      : "text-gray-300 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Sort Options Dropdown */}
         <div className="relative hidden md:block">
           <button
-            onClick={() => {
-              setShowSortMenu(!showSortMenu);
-              setShowDateMenu(false);
-            }}
+            onClick={() => setShowSortMenu(!showSortMenu)}
             className="flex items-center gap-2 text-gray-300 hover:text-white text-sm font-medium transition-colors px-3.5 py-2 rounded-xl hover:bg-white/5 border border-white/5"
           >
             <ArrowUpDown className="w-4 h-4 text-emerald-400" />
@@ -161,60 +118,13 @@ const Header = () => {
           )}
         </div>
 
-        {/* Notification Bell */}
-        <div className="relative">
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all relative active:scale-95"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-[#0b0c16]" />
-          </button>
-
-          {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 glass-card rounded-2xl p-4 shadow-2xl border border-white/15 z-50">
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                <h4 className="font-semibold text-sm text-white">Notifications</h4>
-                <span className="text-xs text-blue-400 cursor-pointer hover:underline">
-                  Mark all read
-                </span>
-              </div>
-              <div className="mt-3 space-y-2.5 text-xs">
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1 shrink-0" />
-                  <div>
-                    <p className="text-white font-medium">Storage alert: 65% used</p>
-                    <p className="text-gray-400 text-[11px] mt-0.5">
-                      Your cloud quota is running smoothly with 80 GB free.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-white/5 border border-white/5 flex gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 mt-1 shrink-0" />
-                  <div>
-                    <p className="text-white font-medium">File sync complete</p>
-                    <p className="text-gray-400 text-[11px] mt-0.5">
-                      10 files synchronized to Telkom Collections.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Avatar */}
+        {/* User Profile Avatar with Name Initials */}
         <button
           onClick={() => openModal("userProfile", user)}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-full overflow-hidden border border-white/20 hover:border-blue-500 transition-all shadow-[0_0_12px_rgba(255,255,255,0.1)] focus:outline-none focus:ring-2 focus:ring-blue-500"
-          title="Account Profile"
+          className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 border border-white/20 flex items-center justify-center font-bold text-white text-xs md:text-sm shadow-md hover:scale-105 transition-all active:scale-95 shrink-0"
+          title={user?.name || "Account Profile"}
         >
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="w-full h-full object-cover"
-          />
+          {getInitials(user?.name || user?.email || "Kartik Lohate")}
         </button>
 
         {/* Upload Files Button */}

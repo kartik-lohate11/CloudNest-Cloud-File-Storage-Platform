@@ -68,4 +68,13 @@ public class ExceptionController extends ResponseEntityExceptionHandler {
         );
         return ResponseEntity.status(404).body(errorMessage);
     }
+
+    @ExceptionHandler(StorageLimitExceededException.class)
+    public ResponseEntity<?> handleStorageLimitExceededException(StorageLimitExceededException exception) {
+        ApiErrorMessage errorMessage = new ApiErrorMessage(
+                exception.getMessage(),
+                HttpStatus.BAD_REQUEST.name()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+    }
 }
