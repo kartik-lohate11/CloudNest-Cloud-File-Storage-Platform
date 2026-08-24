@@ -2,6 +2,10 @@ package com.cloud.CloudNest.controller;
 
 import com.cloud.CloudNest.dto.UserDto;
 import com.cloud.CloudNest.dto.request.LoginRequest;
+import com.cloud.CloudNest.dto.request.SendOtpRequest;
+import com.cloud.CloudNest.dto.request.VerifyOtpRequest;
+import com.cloud.CloudNest.dto.response.OtpResponse;
+import com.cloud.CloudNest.services.OtpService;
 import com.cloud.CloudNest.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final OtpService otpService;
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestBody LoginRequest request) {
@@ -25,5 +30,16 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<?> createUser(@RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.registerUser(userDto));
+    }
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<OtpResponse> sendOtp(@RequestBody SendOtpRequest request) {
+        return ResponseEntity.ok(otpService.sendOtp(request));
+    }
+
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<OtpResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(otpService.verifyOtp(request));
     }
 }
