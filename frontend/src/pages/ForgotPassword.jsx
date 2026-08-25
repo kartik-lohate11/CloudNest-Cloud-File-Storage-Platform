@@ -101,7 +101,13 @@ const ForgotPassword = () => {
     setErrorMsg("");
 
     try {
-      await authService.verifyOtp(email.trim(), otp.trim(), "FORGOT_PASSWORD");
+      const verifyRes = await authService.verifyOtp(email.trim(), otp.trim(), "FORGOT_PASSWORD");
+      const msg = typeof verifyRes === "string" ? verifyRes : verifyRes?.message || "";
+      if (msg && !msg.toLowerCase().includes("verified successfully")) {
+        setErrorMsg(msg || "Invalid OTP code. Please check your email and try again.");
+        return;
+      }
+
       setStep(3); // Advance to Update Password step
       setSuccessMsg("OTP verified successfully! Please set your new password.");
     } catch (err) {

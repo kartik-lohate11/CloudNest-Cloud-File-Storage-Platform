@@ -105,6 +105,11 @@ const Signup = () => {
     try {
       // 1. Verify OTP code
       const verifyRes = await authService.verifyOtp(email, otp.trim(), "REGISTRATION");
+      const msg = typeof verifyRes === "string" ? verifyRes : verifyRes?.message || "";
+      if (msg && !msg.toLowerCase().includes("verified successfully")) {
+        setErrorMsg(msg || "Invalid OTP code. Please check your email and try again.");
+        return;
+      }
 
       // 2. Once OTP verification is successful, create user account on backend
       await authService.signup({ userName: name, name, email, password });

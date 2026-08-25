@@ -48,6 +48,10 @@ public class OtpServiceImpl implements OtpService {
             throw new UserInvalidInputException("Email is not registered");
         }
 
+        if (request.getOtpType().equals(OtpType.FORGOT_PASSWORD) && !"LOCAL".equals(userData.getProvideType())) {
+            throw new UserInvalidInputException("This account uses " + userData.getProvideType() + " login. Please sign in with Google.");
+        }
+
         try {
             // Delete previous OTP
             emailOtpRepository.deleteByEmail(email);

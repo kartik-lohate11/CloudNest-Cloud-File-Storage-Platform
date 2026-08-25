@@ -190,17 +190,17 @@ export const authService = {
     const payload = { mail: email, email: email, otp: otp, otpType: otpType, type: otpType };
     try {
       const response = await api.post("/user/api/verify-otp", payload);
-      return response.data;
+      const data = response.data;
+      const msg = typeof data === "string" ? data : data?.message || "";
+      if (msg && !msg.toLowerCase().includes("verified successfully")) {
+        throw new Error(msg);
+      }
+      return data;
     } catch (error) {
       if (error?.response) {
         throw error;
       }
-      try {
-        const response2 = await api.post("/auth/verify-otp", payload);
-        return response2.data;
-      } catch (err2) {
-        throw err2;
-      }
+      throw error;
     }
   },
 
