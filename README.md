@@ -67,7 +67,6 @@
 ## 🏛️ System Architecture Diagram
 
 ```mermaid
-```mermaid
 flowchart TB
     subgraph ClientTier["CLIENT — React 18 + Vite"]
         direction LR
