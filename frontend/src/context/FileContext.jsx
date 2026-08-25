@@ -260,7 +260,28 @@ export const FileProvider = ({ children }) => {
   const deleteFile = (fileId) => {
     const fileToDelete = files.find((f) => f.id === fileId);
     if (fileToDelete) {
+      const fileBytes = fileToDelete.sizeBytes || fileToDelete.size || 0;
+      const fileType = fileToDelete.type || "other";
+
       setFiles((prev) => prev.filter((f) => f.id !== fileId));
+      setTotalElements((prev) => Math.max(0, prev - 1));
+
+      if (fileBytes > 0) {
+        setTotalStorageUsedBytes((prev) => Math.max(0, prev - fileBytes));
+      }
+
+      setBackendCategoryStats((prev) => {
+        if (!prev || !prev[fileType]) return prev;
+        return {
+          ...prev,
+          [fileType]: {
+            ...prev[fileType],
+            count: Math.max(0, (prev[fileType].count || 1) - 1),
+            bytes: Math.max(0, (prev[fileType].bytes || fileBytes) - fileBytes),
+          },
+        };
+      });
+
       setTrashFiles((prev) => [
         {
           ...fileToDelete,
@@ -275,8 +296,28 @@ export const FileProvider = ({ children }) => {
   const restoreFromTrash = (fileId) => {
     const fileToRestore = trashFiles.find((f) => f.id === fileId);
     if (fileToRestore) {
+      const fileBytes = fileToRestore.sizeBytes || fileToRestore.size || 0;
+      const fileType = fileToRestore.type || "other";
+
       setTrashFiles((prev) => prev.filter((f) => f.id !== fileId));
       setFiles((prev) => [fileToRestore, ...prev]);
+      setTotalElements((prev) => prev + 1);
+
+      if (fileBytes > 0) {
+        setTotalStorageUsedBytes((prev) => prev + fileBytes);
+      }
+
+      setBackendCategoryStats((prev) => {
+        if (!prev || !prev[fileType]) return prev;
+        return {
+          ...prev,
+          [fileType]: {
+            ...prev[fileType],
+            count: (prev[fileType].count || 0) + 1,
+            bytes: (prev[fileType].bytes || 0) + fileBytes,
+          },
+        };
+      });
     }
   };
 
@@ -300,7 +341,28 @@ export const FileProvider = ({ children }) => {
   const archiveFile = (fileId) => {
     const fileToArchive = files.find((f) => f.id === fileId);
     if (fileToArchive) {
+      const fileBytes = fileToArchive.sizeBytes || fileToArchive.size || 0;
+      const fileType = fileToArchive.type || "other";
+
       setFiles((prev) => prev.filter((f) => f.id !== fileId));
+      setTotalElements((prev) => Math.max(0, prev - 1));
+
+      if (fileBytes > 0) {
+        setTotalStorageUsedBytes((prev) => Math.max(0, prev - fileBytes));
+      }
+
+      setBackendCategoryStats((prev) => {
+        if (!prev || !prev[fileType]) return prev;
+        return {
+          ...prev,
+          [fileType]: {
+            ...prev[fileType],
+            count: Math.max(0, (prev[fileType].count || 1) - 1),
+            bytes: Math.max(0, (prev[fileType].bytes || fileBytes) - fileBytes),
+          },
+        };
+      });
+
       setArchiveFiles((prev) => [
         {
           ...fileToArchive,
@@ -315,8 +377,28 @@ export const FileProvider = ({ children }) => {
   const restoreFromArchive = (fileId) => {
     const fileToRestore = archiveFiles.find((f) => f.id === fileId);
     if (fileToRestore) {
+      const fileBytes = fileToRestore.sizeBytes || fileToRestore.size || 0;
+      const fileType = fileToRestore.type || "other";
+
       setArchiveFiles((prev) => prev.filter((f) => f.id !== fileId));
       setFiles((prev) => [fileToRestore, ...prev]);
+      setTotalElements((prev) => prev + 1);
+
+      if (fileBytes > 0) {
+        setTotalStorageUsedBytes((prev) => prev + fileBytes);
+      }
+
+      setBackendCategoryStats((prev) => {
+        if (!prev || !prev[fileType]) return prev;
+        return {
+          ...prev,
+          [fileType]: {
+            ...prev[fileType],
+            count: (prev[fileType].count || 0) + 1,
+            bytes: (prev[fileType].bytes || 0) + fileBytes,
+          },
+        };
+      });
     }
   };
 

@@ -1,14 +1,23 @@
 import { useNavigate } from "react-router-dom";
-import { X, LogOut, Settings, ShieldCheck, HardDrive, Mail } from "lucide-react";
+import { X, LogOut, ShieldCheck, HardDrive, Mail } from "lucide-react";
 import { useFiles } from "../context/FileContext";
+
+export const formatDisplayName = (name, fallbackEmail) => {
+  const raw = name || fallbackEmail || "CloudNest User";
+  if (raw.includes("@")) {
+    return raw.split("@")[0];
+  }
+  return raw;
+};
 
 const getInitials = (name) => {
   if (!name) return "CN";
-  const parts = name.trim().split(/\s+/);
+  const cleanName = name.includes("@") ? name.split("@")[0] : name;
+  const parts = cleanName.trim().split(/[\s._-]+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
-  return name.substring(0, 2).toUpperCase();
+  return cleanName.substring(0, 2).toUpperCase();
 };
 
 const UserProfile = () => {
@@ -22,6 +31,9 @@ const UserProfile = () => {
     closeModal();
     navigate("/login");
   };
+
+  const displayName = formatDisplayName(user?.name, user?.email);
+  const displayEmail = user?.email || user?.mail || (user?.name?.includes("@") ? user.name : "user@cloudnest.io");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
@@ -47,12 +59,12 @@ const UserProfile = () => {
         </div>
 
         {/* User Info */}
-        <h3 className="text-lg font-bold text-white font-['Hanken_Grotesk']">
-          {user?.name || "CloudNest User"}
+        <h3 className="text-lg font-bold text-white font-['Hanken_Grotesk'] capitalize">
+          {displayName}
         </h3>
         <p className="text-xs text-gray-400 flex items-center justify-center gap-1.5 mt-1">
           <Mail className="w-3.5 h-3.5 text-blue-400" />
-          <span>{user?.email || "user@cloudnest.io"}</span>
+          <span>{displayEmail}</span>
         </p>
         <div className="inline-block mt-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
           Standard 5 GB Capacity

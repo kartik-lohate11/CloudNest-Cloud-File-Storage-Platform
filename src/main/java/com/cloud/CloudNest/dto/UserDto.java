@@ -16,6 +16,8 @@ public class UserDto {
     private String userName;
     private String password;
     private String mail;
+    private String provideType;
+    private String provideId;
     private List<FileMetaDataDto> files = new ArrayList<>();
 
 
@@ -28,6 +30,8 @@ public class UserDto {
 
         UserDto userDto = new UserDto();
         userDto.setId(entity.getId());
+        userDto.setProvideType(entity.getProvideType());
+        userDto.setProvideId(entity.getProvideId());
         userDto.setUserName(entity.getUserName());
         userDto.setMail(entity.getMail());
         userDto.setPassword(entity.getPassword());
@@ -42,6 +46,8 @@ public class UserDto {
         entity.setPassword(this.password);
         entity.setMail(this.mail);
         entity.setId(this.id);
+        entity.setProvideType(this.provideType);
+        entity.setProvideId(this.provideId);
         return entity;
     }
 }

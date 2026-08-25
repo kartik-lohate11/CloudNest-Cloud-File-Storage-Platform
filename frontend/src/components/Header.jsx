@@ -11,11 +11,12 @@ import { useFiles } from "../context/FileContext";
 
 const getInitials = (name) => {
   if (!name) return "CN";
-  const parts = name.trim().split(/\s+/);
+  const cleanName = name.includes("@") ? name.split("@")[0] : name;
+  const parts = cleanName.trim().split(/[\s._-]+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
-  return name.substring(0, 2).toUpperCase();
+  return cleanName.substring(0, 2).toUpperCase();
 };
 
 const Header = () => {
@@ -121,8 +122,8 @@ const Header = () => {
         {/* User Profile Avatar with Name Initials */}
         <button
           onClick={() => openModal("userProfile", user)}
-          className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 border border-white/20 flex items-center justify-center font-bold text-white text-xs md:text-sm shadow-md hover:scale-105 transition-all active:scale-95 shrink-0"
-          title={user?.name || "Account Profile"}
+          className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 border border-white/20 flex items-center justify-center font-bold text-white text-xs md:text-sm shadow-md hover:scale-105 transition-all active:scale-95 shrink-0 uppercase"
+          title={user?.name?.includes("@") ? user.name.split("@")[0] : (user?.name || "Account Profile")}
         >
           {getInitials(user?.name || user?.email || "Kartik Lohate")}
         </button>

@@ -23,9 +23,23 @@ public class UserController {
     private final UserService userService;
     private final OtpService otpService;
 
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(userService.loginUser(request));
+    }
+
     @PostMapping("/verify")
     public ResponseEntity<?> verifyUser(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(userService.loginUser(request));
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+        String identifier = authentication.getName();
+        return ResponseEntity.ok(userService.getByUserName(identifier));
     }
 
     @PostMapping("/create")

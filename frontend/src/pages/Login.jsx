@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Cloud, CheckCircle2 } from "lucide-react";
-import { authService } from "../services/api";
+import { authService, BACKEND_URL } from "../services/api";
 import { useFiles } from "../context/FileContext";
 
 const Login = () => {
@@ -16,25 +16,64 @@ const Login = () => {
   const [error, setError] = useState("");
   const [successMsg] = useState(location.state?.message || "");
 
+  // Handle OAuth2 Redirect callback token or error
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const errorParam = params.get("error");
+    const tokenParam = params.get("token");
+    const userNameParam = params.get("userName");
+    const emailParam = params.get("email");
+
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    } else if (tokenParam) {
+      localStorage.setItem("cloudnest_token", tokenParam);
+      const userObj = {
+        name: userNameParam || emailParam || "OAuth User",
+        email: emailParam || userNameParam || "user@cloudnest.io",
+      };
+      localStorage.setItem("cloudnest_user", JSON.stringify(userObj));
+      setUser(userObj);
+      navigate("/", { replace: true });
+    }
+  }, [location.search, navigate, setUser]);
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${BACKEND_URL}/oauth2/authorization/google`;
+  };
+
+  const handleGithubLogin = () => {
+    window.location.href = `${BACKEND_URL}/oauth2/authorization/github`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      const response = await authService.login({ userName: email, password, rememberMe });
+      const response = await authService.login({ userName: email, password });
       if (response && response.token) {
         localStorage.setItem("cloudnest_token", response.token);
-        if (response.user) {
-          setUser((prev) => ({ ...prev, ...response.user }));
-        }
+        const userObj = response.user || response.userDto || {
+          userName: email,
+          mail: email,
+          name: email,
+          email: email,
+        };
+        localStorage.setItem("cloudnest_user", JSON.stringify(userObj));
+        setUser(userObj);
         navigate("/");
       } else {
         setError("Invalid login credentials. Please try again.");
       }
     } catch (err) {
       console.error("Login submission error:", err);
-      const errMsg = err?.response?.data?.message || err?.message || "Invalid login credentials. Please try again.";
+      const errMsg =
+        err?.response?.data?.message ||
+        (typeof err?.response?.data === "string" ? err?.response?.data : null) ||
+        err?.message ||
+        "Invalid login credentials. Please try again.";
       setError(errMsg);
     } finally {
       setIsLoading(false);
@@ -206,10 +245,7 @@ const Login = () => {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => {
-                localStorage.setItem("cloudnest_token", "mock-google-token");
-                navigate("/");
-              }}
+              onClick={handleGoogleLogin}
               className="w-full inline-flex items-center justify-center py-2 px-4 border border-gray-700 rounded-xl bg-gray-800/50 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
@@ -235,10 +271,7 @@ const Login = () => {
 
             <button
               type="button"
-              onClick={() => {
-                localStorage.setItem("cloudnest_token", "mock-github-token");
-                navigate("/");
-              }}
+              onClick={handleGithubLogin}
               className="w-full inline-flex items-center justify-center py-2 px-4 border border-gray-700 rounded-xl bg-gray-800/50 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
             >
               <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 20 20">

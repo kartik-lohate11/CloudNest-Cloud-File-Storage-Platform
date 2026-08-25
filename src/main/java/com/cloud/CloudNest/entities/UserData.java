@@ -21,6 +21,9 @@ public class UserData {
     private String userName;
     private String password;
 
+    private String provideType;
+    private String provideId;
+
     @Column(unique = true)
     private String mail;
 

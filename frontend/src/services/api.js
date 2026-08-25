@@ -1,8 +1,11 @@
 import axios from "axios";
 
+// Central Backend URL configured via .env
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8081";
+
 // Base API instance prepared for Spring Boot backend
 const api = axios.create({
-  baseURL: "http://localhost:8081",
+  baseURL: BACKEND_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -19,6 +22,21 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle 401 Unauthorized globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("cloudnest_token");
+      localStorage.removeItem("cloudnest_user");
+      if (window.location.pathname !== "/login" && window.location.pathname !== "/oauth/callback") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Dynamic storage state constants
@@ -66,31 +84,47 @@ export const transformBackendFile = (backendFile) => {
 export const authService = {
   login: async (credentials) => {
     try {
-      const response = await api.post("/user/api/verify", {
+      const response = await api.post("/user/api/login", {
         userName: credentials.userName || credentials.email,
         password: credentials.password,
       });
 
-      const userData = response.data;
-      if (!userData) {
+      const authData = response.data; // Response: { token: "JWT_TOKEN", user: { id, userName, mail } }
+      if (!authData) {
         throw new Error("No response data received from server");
       }
 
+      const realToken = authData.token;
+      const userObj = authData.user || authData.userDto || {};
+
       return {
-        token: `cloudnest-token-${userData.id || Date.now()}`,
+        token: realToken,
         user: {
-          id: userData.id,
-          name: userData.userName || userData.name,
-          email: userData.mail || userData.email,
-          role: "Pro User",
-          avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-          plan: "Pro 100 GB Plan",
+          id: userObj.id,
+          userName: userObj.userName || userObj.name,
+          mail: userObj.mail || userObj.email,
+          name: userObj.userName || userObj.name || userObj.mail,
+          email: userObj.mail || userObj.email,
         },
-        data: userData,
+        userDto: userObj,
+        data: authData,
       };
     } catch (error) {
-      console.error("Backend API verify error:", error);
-      throw error;
+      if (error?.response) throw error;
+      throw new Error("Invalid username or password");
+    }
+  },
+
+  getCurrentUser: async (customToken) => {
+    try {
+      const token = customToken || localStorage.getItem("cloudnest_token");
+      const response = await api.get("/user/api/me", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      return response.data;
+    } catch (error) {
+      if (error?.response) throw error;
+      throw new Error("Failed to fetch user profile");
     }
   },
 

@@ -4,12 +4,13 @@ import com.cloud.CloudNest.dto.UserDto;
 import com.cloud.CloudNest.dto.request.ForgotPasswordRequest;
 import com.cloud.CloudNest.dto.request.LoginRequest;
 import com.cloud.CloudNest.dto.request.UpdateProfileRequest;
+import com.cloud.CloudNest.dto.response.AuthResponse;
 
 public interface UserService {
 
     UserDto registerUser(UserDto user);
 
-    UserDto loginUser(LoginRequest request);
+    AuthResponse loginUser(LoginRequest request);
 
     UserDto getUserById(Long id);
 
@@ -20,4 +21,6 @@ public interface UserService {
     UserDto getByUserName(String userName);
 
     String resetPassword(ForgotPasswordRequest request);
+
+    UserDto registerUserByAuth(UserDto userDto);
 }

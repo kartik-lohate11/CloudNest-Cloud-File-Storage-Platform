@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Repository
 public interface UserDataRepository extends JpaRepository<UserData, Long> {
     UserData findByUserNameAndPassword(String userName, String password);
@@ -19,6 +21,8 @@ public interface UserDataRepository extends JpaRepository<UserData, Long> {
     UserData findByMail(String mail);
 
     boolean existsByMail(String mail);
+
+    Optional<UserData> findByProvideTypeAndProvideId(String provideType, String provideId);
 
     @Modifying
     @Transactional
