@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0c16" />
+      <stop offset="50%" stop-color="#111322" />
+      <stop offset="100%" stop-color="#090a12" />
+    </linearGradient>
+
+    <!-- Mesh Glow Gradients -->
+    <radialGradient id="cyanGlow" cx="30%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="purpleGlow" cx="70%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Typography Gradient -->
+    <linearGradient id="titleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#60a5fa" />
+      <stop offset="70%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+
+    <!-- Cloud Icon Gradient -->
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+
+    <!-- Glassmorphic Card Fill -->
+    <linearGradient id="glassFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.02" />
+    </linearGradient>
+
+    <!-- Filter for Glow Shadow -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="iconShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#6366f1" flood-opacity="0.5" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="420" fill="url(#bgGradient)" />
+
+  <!-- Atmospheric Glow Orbs -->
+  <circle cx="250" cy="180" r="300" fill="url(#cyanGlow)" />
+  <circle cx="950" cy="200" r="320" fill="url(#purpleGlow)" />
+  <circle cx="600" cy="210" r="280" fill="url(#centerGlow)" />
+
+  <!-- Cybernetic Grid Pattern Overlay -->
+  <g opacity="0.07" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="70" x2="1200" y2="70" />
+    <line x1="0" y1="140" x2="1200" y2="140" />
+    <line x1="0" y1="210" x2="1200" y2="210" />
+    <line x1="0" y1="280" x2="1200" y2="280" />
+    <line x1="0" y1="350" x2="1200" y2="350" />
+    
+    <line x1="150" y1="0" x2="150" y2="420" />
+    <line x1="300" y1="0" x2="300" y2="420" />
+    <line x1="450" y1="0" x2="450" y2="420" />
+    <line x1="600" y1="0" x2="600" y2="420" />
+    <line x1="750" y1="0" x2="750" y2="420" />
+    <line x1="900" y1="0" x2="900" y2="420" />
+    <line x1="1050" y1="0" x2="1050" y2="420" />
+  </g>
+
+  <!-- Floating Ambient Particles & Storage Nodes -->
+  <g opacity="0.4">
+    <circle cx="180" cy="120" r="3" fill="#38bdf8" />
+    <circle cx="1020" cy="140" r="3.5" fill="#c084fc" />
+    <circle cx="240" cy="300" r="2.5" fill="#818cf8" />
+    <circle cx="960" cy="290" r="3" fill="#38bdf8" />
+    <circle cx="480" cy="90" r="2" fill="#c084fc" />
+    <circle cx="720" cy="100" r="2.5" fill="#38bdf8" />
+  </g>
+
+  <!-- Centered Glassmorphic Hero Container -->
+  <rect x="180" y="45" width="840" height="330" rx="28" fill="url(#glassFill)" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
+
+  <!-- Center Cloud Logo Emblem -->
+  <g transform="translate(600, 115)" filter="url(#iconShadow)">
+    <!-- Emblem Background Hex/Pill -->
+    <rect x="-42" y="-42" width="84" height="84" rx="22" fill="#1e1b4b" stroke="rgba(99, 102, 241, 0.5)" stroke-width="2" />
+    
+    <!-- 3D Styled Cloud Icon -->
+    <path d="M-18 10 C-24 10 -28 6 -28 0 C-28 -5 -24 -9 -19 -9 C-18 -16 -12 -21 -4 -21 C3 -21 9 -17 11 -11 C14 -11 17 -9 18 -6 C22 -6 25 -3 25 2 C25 7 21 10 16 10 Z" 
+          fill="url(#cloudGradient)" />
+  </g>
+
+  <!-- Main Center Title: CloudNest -->
+  <text x="600" y="215" 
+        text-anchor="middle" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+        font-weight="900" 
+        font-size="54" 
+        letter-spacing="-1.5"
+        fill="url(#titleGradient)"
+        filter="url(#neonGlow)">
+    CloudNest
+  </text>
+
+  <!-- Subtitle -->
+  <text x="600" y="255" 
+        text-anchor="middle" 
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" 
+        font-weight="600" 
+        font-size="14" 
+        letter-spacing="3" 
+        fill="#94a3b8" 
+        text-transform="uppercase">
+    Cloud File Storage &amp; Personal Workspace Platform
+  </text>
+
+  <!-- Tech Badges / Highlights Footer inside Card -->
+  <g transform="translate(600, 310)">
+    <!-- Pill 1: MinIO S3 -->
+    <g transform="translate(-230, 0)">
+      <rect x="-85" y="-15" width="170" height="30" rx="15" fill="#1e293b" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1" />
+      <circle cx="-65" cy="0" r="4" fill="#38bdf8" />
+      <text x="-50" y="4" font-family="-apple-system, sans-serif" font-weight="600" font-size="11" fill="#cbd5e1">MinIO S3 Storage</text>
+    </g>
+
+    <!-- Pill 2: Spring Boot 4.1.0 -->
+    <g transform="translate(0, 0)">
+      <rect x="-95" y="-15" width="190" height="30" rx="15" fill="#1e293b" stroke="rgba(52, 211, 153, 0.3)" stroke-width="1" />
+      <circle cx="-75" cy="0" r="4" fill="#34d399" />
+      <text x="-60" y="4" font-family="-apple-system, sans-serif" font-weight="600" font-size="11" fill="#cbd5e1">Spring Boot 4.1.0 &amp; Java 21</text>
+    </g>
+
+    <!-- Pill 3: React 18 & OAuth2 -->
+    <g transform="translate(230, 0)">
+      <rect x="-85" y="-15" width="170" height="30" rx="15" fill="#1e293b" stroke="rgba(192, 132, 252, 0.3)" stroke-width="1" />
+      <circle cx="-65" cy="0" r="4" fill="#c084fc" />
+      <text x="-50" y="4" font-family="-apple-system, sans-serif" font-weight="600" font-size="11" fill="#cbd5e1">OAuth2 &amp; React 18</text>
+    </g>
+  </g>
+</svg>
