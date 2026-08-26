@@ -1,8 +1,12 @@
 services:
 
+  # ----------------------------------------------------------------------------
+  # MinIO S3-Compatible Object Storage Service
+  # ----------------------------------------------------------------------------
   minio:
     image: minio/minio:latest
     container_name: cloudnest-minio
+    restart: unless-stopped
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -12,6 +16,36 @@ services:
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    networks:
+      - cloudnest-net
+
+  # ----------------------------------------------------------------------------
+  # Spring Boot Backend Service
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudnest-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/cloudnest
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - MINIO_URL=http://minio:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=admin12345
+      - MINIO_BUCKET=cloudnest
+    depends_on:
+      - minio
+    networks:
+      - cloudnest-net
 
 volumes:
   minio_data:
+
+networks:
+  cloudnest-net:
+    driver: bridge
