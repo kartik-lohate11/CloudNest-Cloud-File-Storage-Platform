@@ -1,0 +1,31 @@
+# Build artifacts & local dependencies
+target/
+*.class
+*.jar
+*.war
+
+# Frontend (handled in separate container or static hosting)
+frontend/
+node_modules/
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Git & VCS
+.git/
+.gitignore
+.gitattributes
+
+# Documentation & Scratch files
+docs/
+*.md
+HELP.md
+
+# OS files
+.DS_Store
+Thumbs.db

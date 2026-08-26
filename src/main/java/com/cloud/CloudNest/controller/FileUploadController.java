@@ -3,12 +3,13 @@ package com.cloud.CloudNest.controller;
 import com.cloud.CloudNest.dto.FileMetaDataDto;
 import com.cloud.CloudNest.dto.UserDto;
 import com.cloud.CloudNest.entities.FileMetadata;
-import com.cloud.CloudNest.services.NoteService;
 import com.cloud.CloudNest.services.FileService;
+import com.cloud.CloudNest.services.NoteService;
 import com.cloud.CloudNest.services.StorageService;
 import com.cloud.CloudNest.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/file/api")
@@ -153,21 +155,19 @@ public class FileUploadController {
     public ResponseEntity<InputStreamResource> downloadFile(
             @PathVariable String fileName) {
 
-        FileMetadata metadata =
-                fileUploadService.getFileMetadata(fileName).toEntity();
+        FileMetadata metadata = fileUploadService.getFileMetadata(fileName).toEntity();
 
-        InputStream inputStream =
-                storageService.download(
-                        metadata.getObjectName());
+        InputStream inputStream = storageService.download(metadata.getObjectName());
+
+        // Safely encode headers for filenames containing spaces or non-ASCII characters
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
+                .filename(metadata.getOriginalFileName(), StandardCharsets.UTF_8)
+                .build();
 
         return ResponseEntity.ok()
-                .contentType(
-                        MediaType.parseMediaType(
-                                metadata.getContentType()))
-                .header(
-                        HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" +
-                                metadata.getOriginalFileName() + "\"")
+                .contentType(MediaType.parseMediaType(metadata.getContentType()))
+                .contentLength(metadata.getSize()) // Prevents in-memory buffering & shows progress bars
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
                 .body(new InputStreamResource(inputStream));
     }
 
