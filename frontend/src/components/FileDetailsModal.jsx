@@ -13,6 +13,7 @@ import {
   User,
   Clock,
   HardDrive,
+  Share2,
 } from "lucide-react";
 import { useFiles } from "../context/FileContext";
 
@@ -284,18 +285,26 @@ const FileDetailsModal = () => {
           </button>
 
           {/* Action Row */}
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-4 gap-2">
             <button
               onClick={() => setIsRenaming(true)}
-              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-2.5 px-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
               <Edit2 className="w-3.5 h-3.5 text-amber-400" />
               <span>Rename</span>
             </button>
 
             <button
+              onClick={() => openModal("share", file)}
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-2.5 px-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <span>Share</span>
+            </button>
+
+            <button
               onClick={() => archiveFile(file.id)}
-              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              className="bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl py-2.5 px-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
               <Archive className="w-3.5 h-3.5 text-purple-400" />
               <span>Archive</span>
@@ -303,7 +312,7 @@ const FileDetailsModal = () => {
 
             <button
               onClick={() => openModal("delete", file)}
-              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-2.5 px-2 text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete</span>

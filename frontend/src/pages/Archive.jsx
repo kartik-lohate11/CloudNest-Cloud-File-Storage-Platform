@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import UploadModal from "../components/UploadModal";
 import FileDetailsModal from "../components/FileDetailsModal";
+import ShareModal from "../components/ShareModal";
 import UserProfile from "../components/UserProfile";
 import { useFiles } from "../context/FileContext";
 
@@ -121,6 +122,7 @@ const Archive = () => {
 
       <UploadModal />
       <FileDetailsModal />
+      <ShareModal />
       <UserProfile />
     </div>
   );

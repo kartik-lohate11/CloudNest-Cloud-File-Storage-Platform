@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/user/api/send-otp",
                                 "/user/api/verify-otp",
                                 "/user/api/update-password",
+                                "/file/api/public/**",
 
                                 // OAuth2 endpoints
                                 "/oauth2/**",

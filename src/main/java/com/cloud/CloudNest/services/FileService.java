@@ -1,6 +1,7 @@
 package com.cloud.CloudNest.services;
 
 import com.cloud.CloudNest.dto.FileMetaDataDto;
+import com.cloud.CloudNest.entities.FileShareLink;
 import com.cloud.CloudNest.entities.UserData;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,4 +19,5 @@ public interface FileService {
     java.util.Map<String, Object> getUserCategoryStats(String userName);
     FileMetaDataDto renameFile(String identifier, String newName);
     void deleteFile(String identifier);
+    String generateFileLink(String objectName);
 }

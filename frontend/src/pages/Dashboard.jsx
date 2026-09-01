@@ -18,6 +18,7 @@ import FileCard from "../components/FileCard";
 import FileTable from "../components/FileTable";
 import UploadModal from "../components/UploadModal";
 import FileDetailsModal from "../components/FileDetailsModal";
+import ShareModal from "../components/ShareModal";
 import UserProfile from "../components/UserProfile";
 import Pagination from "../components/Pagination";
 import { useFiles } from "../context/FileContext";
@@ -309,6 +310,7 @@ const Dashboard = () => {
       {/* Global Interactive Modals */}
       <UploadModal />
       <FileDetailsModal />
+      <ShareModal />
       <UserProfile />
     </div>
   );

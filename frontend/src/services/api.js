@@ -393,6 +393,29 @@ export const fileService = {
       return null;
     }
   },
+
+  generateShareLink: async (objectName) => {
+    try {
+      const response = await api.post(`/file/api/${encodeURIComponent(objectName)}/share`);
+      return response.data;
+    } catch (error) {
+      if (error?.response) throw error;
+      throw new Error("Failed to generate share link");
+    }
+  },
+
+  getSharedFileInfo: async (token) => {
+    try {
+      const response = await api.get(`/file/api/public/file/${token}/info`);
+      return transformBackendFile(response.data);
+    } catch {
+      return null;
+    }
+  },
+
+  getPublicDownloadUrl: (token) => {
+    return `${BACKEND_URL}/file/api/public/file/${token}`;
+  },
 };
 
 export const noteService = {

@@ -10,6 +10,7 @@ import Notes from "./pages/Notes";
 import Archive from "./pages/Archive";
 import Trash from "./pages/Trash";
 import HelpCenter from "./pages/HelpCenter";
+import PublicSharedFile from "./pages/PublicSharedFile";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("cloudnest_token");
@@ -32,7 +33,7 @@ function App() {
     <FileProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Authentication Routes */}
+          {/* Public Routes */}
           <Route
             path="/login"
             element={
@@ -44,6 +45,8 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
+          <Route path="/shared/:token" element={<PublicSharedFile />} />
+          <Route path="/public/file/:token" element={<PublicSharedFile />} />
 
           {/* Protected Main App Routes */}
           <Route
