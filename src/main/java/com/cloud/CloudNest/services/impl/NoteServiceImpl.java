@@ -8,11 +8,13 @@ import com.cloud.CloudNest.exception.FileNotFoundException;
 import com.cloud.CloudNest.repository.UserNoteRepository;
 import com.cloud.CloudNest.services.NoteService;
 import com.cloud.CloudNest.services.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class NoteServiceImpl implements NoteService {
 
@@ -38,6 +40,8 @@ public class NoteServiceImpl implements NoteService {
                 .tags(tagsStr)
                 .uploadedBy(user.toEntity())
                 .build();
+
+        log.info("Note Created...");
 
         return NoteDto.toDto(userNoteRepository.save(note));
     }
