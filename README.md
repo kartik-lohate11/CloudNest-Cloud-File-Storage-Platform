@@ -67,94 +67,119 @@
 ## 🏛️ System Architecture Diagram
 
 ```mermaid
-```mermaid
 flowchart TB
-    subgraph ClientTier["CLIENT — React 18 + Vite"]
-        direction LR
-        UI["UI Components<br/>Dashboard · FileTable · Notes · Modals"]
-        State["State Layer<br/>FileContext · Live Stats"]
-        Axios["Axios Client<br/>JWT Interceptor · 401 Handler"]
-        OAuthNav["OAuth Navigator<br/>Google / GitHub Redirects"]
+    %% ==========================================
+    %% CLIENT TIER
+    %% ==========================================
+    subgraph ClientTier["💻 Client Tier — React 18 + Vite"]
+        direction TB
+        UI["🎨 Dashboard UI<br/>FileTable · Notes · Modals"]
+        ShareModal["🔗 Share Modal<br/>1-click link copy & share"]
+        PublicPage["🌐 Public Shared File Page<br/>/shared/:token · /public/file/:token"]
+        State["⚡ State & Context Layer<br/>FileContext · real-time stats"]
+        AxiosClient["📡 Axios HTTP Client<br/>JWT bearer interceptor · 401 handler"]
+        OAuthNav["🔑 OAuth Navigator<br/>Google & GitHub SSO redirects"]
 
-        UI --> State --> Axios
-        State --> OAuthNav
+        UI <--> State
+        UI --> ShareModal
+        State <--> AxiosClient
     end
 
-    subgraph SecurityTier["SECURITY — Spring Security 6"]
-        direction LR
-        JwtFilter["JwtFilter<br/>Validates Bearer Token"]
-        SecurityConfig["SecurityConfig<br/>Public / Protected Routes"]
-        OAuthHandler["OAuth2SuccessHandler<br/>Account Link & Redirect"]
-
-        JwtFilter --> SecurityConfig
+    %% ==========================================
+    %% SECURITY LAYER
+    %% ==========================================
+    subgraph SecurityTier["🛡️ Spring Security 6 Layer"]
+        direction TB
+        JwtFilter["🔑 JwtFilter<br/>Validates bearer token claims"]
+        OAuthHandler["🤝 OAuth2SuccessHandler<br/>Account linking & redirect"]
+        SecurityConfig["⚙️ SecurityConfig<br/>Public: /file/api/public/**"]
     end
 
-    subgraph AppTier["APPLICATION CORE — Spring Boot 4.1 · Java 21"]
+    %% ==========================================
+    %% APPLICATION CORE
+    %% ==========================================
+    subgraph AppTier["⚙️ Application Core — Spring Boot 4.1 · Java 21"]
         direction TB
 
-        subgraph Controllers["Controllers"]
+        subgraph Controllers["🕹️ REST Controllers"]
             direction LR
             UserCtrl["UserController<br/>/user/api/*"]
-            FileCtrl["FileUploadController<br/>/file/api/*"]
+            FileCtrl["FileUploadController<br/>/file/api/* · /public/file/*"]
             NoteCtrl["NoteController<br/>/note/api/*"]
         end
 
-        subgraph Services["Services"]
+        subgraph Services["🧩 Business Services"]
             direction LR
-            UserSvc["UserService<br/>Auth · Profile · Password"]
-            OtpSvc["OtpService<br/>OTP Generate & Verify"]
-            FileSvc["FileUploadService<br/>MinIO Streaming"]
-            NoteSvc["NoteService<br/>Notes CRUD"]
-            FileSpec["FileSpecification<br/>Search & Filter"]
+            UserService["UserService<br/>Auth · profile · passwords"]
+            OtpService["OtpService<br/>6-digit OTP gen & validate"]
+            FileService["FileUploadService<br/>MinIO streamer · share links"]
+            NoteService["NoteService<br/>Workspace notes CRUD"]
+            JPASpec["FileSpecification<br/>JPA search & filter engine"]
         end
 
-        UserCtrl --> UserSvc
-        UserCtrl --> OtpSvc
-        FileCtrl --> FileSvc
-        FileCtrl --> FileSpec
-        NoteCtrl --> NoteSvc
+        UserCtrl --> UserService
+        UserCtrl --> OtpService
+        FileCtrl --> FileService
+        FileCtrl --> JPASpec
+        NoteCtrl --> NoteService
     end
 
-    subgraph StorageTier["STORAGE"]
+    %% ==========================================
+    %% STORAGE TIER
+    %% ==========================================
+    subgraph StorageTier["💾 Storage & Persistence"]
         direction LR
-        MySQL[("MySQL 8<br/>Users · Metadata · OTPs · Notes")]
-        MinIO[("MinIO S3<br/>File Blobs (Images/Video/PDF)")]
+        MySQL[("🗄️ MySQL 8<br/>Users · file metadata · share tokens<br/>OTPs · notes")]
+        MinIO[("📦 MinIO S3<br/>Binary blobs — images, video, PDFs<br/>API :9000 · Console :9001")]
     end
 
-    subgraph ExternalTier["EXTERNAL SERVICES"]
+    %% ==========================================
+    %% EXTERNAL SERVICES
+    %% ==========================================
+    subgraph ExternalServices["☁️ External Services"]
         direction LR
-        Google["Google OAuth2"]
-        GitHub["GitHub OAuth2"]
-        SMTP["Gmail SMTP<br/>(TLS 587)"]
+        GoogleOAuth["🔵 Google OAuth2<br/>Consent & identity"]
+        GitHubOAuth["⚫ GitHub OAuth2<br/>Developer OAuth portal"]
+        SMTPMail["✉️ Gmail SMTP<br/>TLS :587 — OTP delivery"]
     end
 
-    Axios -->|"REST + Bearer JWT"| JwtFilter
-    OAuthNav -->|"1 Authorize"| Google
-    OAuthNav -->|"1 Authorize"| GitHub
-    Google -->|"2 Code + Profile"| OAuthHandler
-    GitHub -->|"2 Code + Profile"| OAuthHandler
-    OAuthHandler -->|"3 Redirect + JWT"| ClientTier
+    %% ==========================================
+    %% DATA FLOWS
+    %% ==========================================
+    AxiosClient -->|"Bearer JWT"| JwtFilter
+    PublicPage -->|"GET /public/file/:token/info"| SecurityConfig
+    PublicPage -->|"GET /public/file/:token"| SecurityConfig
 
+    OAuthNav -->|"Authorize"| GoogleOAuth
+    OAuthNav -->|"Authorize"| GitHubOAuth
+    GoogleOAuth -->|"Code + profile"| OAuthHandler
+    GitHubOAuth -->|"Code + profile"| OAuthHandler
+    OAuthHandler -->|"Redirect w/ JWT"| ClientTier
+
+    JwtFilter --> SecurityConfig
     SecurityConfig --> Controllers
 
-    UserSvc --> MySQL
-    OtpSvc --> MySQL
-    OtpSvc -->|"Send OTP"| SMTP
-    FileSvc -->|"Metadata + Audit"| MySQL
-    FileSvc -->|"Stream Bytes"| MinIO
-    NoteSvc --> MySQL
+    UserService --> MySQL
+    OtpService --> MySQL
+    OtpService -->|"Send OTP"| SMTPMail
+    FileService -->|"Metadata & tokens"| MySQL
+    FileService -->|"Stream bytes"| MinIO
+    NoteService --> MySQL
 
-    classDef client fill:#EEF2FF,stroke:#6366F1,stroke-width:1.5px,color:#1E1B4B;
-    classDef security fill:#FDF4FF,stroke:#C026D3,stroke-width:1.5px,color:#4A044E;
-    classDef app fill:#ECFDF5,stroke:#10B981,stroke-width:1.5px,color:#064E3B;
-    classDef storage fill:#F0F9FF,stroke:#0EA5E9,stroke-width:1.5px,color:#0C4A6E;
-    classDef external fill:#FFF7ED,stroke:#F97316,stroke-width:1.5px,color:#7C2D12;
+    %% ==========================================
+    %% STYLING — production palette, WCAG-AA contrast
+    %% ==========================================
+    classDef client fill:#EEF2FF,stroke:#4F46E5,stroke-width:1.5px,color:#1E1B4B;
+    classDef security fill:#F5F3FF,stroke:#9333EA,stroke-width:1.5px,color:#3B0764;
+    classDef app fill:#ECFDF5,stroke:#059669,stroke-width:1.5px,color:#064E3B;
+    classDef storage fill:#EFF6FF,stroke:#2563EB,stroke-width:1.5px,color:#1E3A8A;
+    classDef external fill:#FFF7ED,stroke:#EA580C,stroke-width:1.5px,color:#7C2D12;
 
-    class ClientTier,UI,State,Axios,OAuthNav client;
+    class ClientTier,UI,ShareModal,PublicPage,State,AxiosClient,OAuthNav client;
     class SecurityTier,JwtFilter,OAuthHandler,SecurityConfig security;
-    class AppTier,Controllers,Services,UserCtrl,FileCtrl,NoteCtrl,UserSvc,OtpSvc,FileSvc,NoteSvc,FileSpec app;
+    class AppTier,Controllers,Services,UserCtrl,FileCtrl,NoteCtrl,UserService,OtpService,FileService,NoteService,JPASpec app;
     class StorageTier,MySQL,MinIO storage;
-    class ExternalTier,Google,GitHub,SMTP external;
+    class ExternalServices,GoogleOAuth,GitHubOAuth,SMTPMail external;
 ```
 
 ---
