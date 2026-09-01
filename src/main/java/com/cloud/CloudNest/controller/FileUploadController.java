@@ -3,6 +3,8 @@ package com.cloud.CloudNest.controller;
 import com.cloud.CloudNest.dto.FileMetaDataDto;
 import com.cloud.CloudNest.dto.UserDto;
 import com.cloud.CloudNest.entities.FileMetadata;
+import com.cloud.CloudNest.entities.FileShareLink;
+import com.cloud.CloudNest.repository.FileShareLinkRepository;
 import com.cloud.CloudNest.services.FileService;
 import com.cloud.CloudNest.services.NoteService;
 import com.cloud.CloudNest.services.StorageService;
@@ -27,6 +29,7 @@ public class FileUploadController {
     private final UserService userService;
     private final StorageService storageService;
     private final NoteService noteService;
+    private final FileShareLinkRepository fileShareLinkRepository;
 
     private org.springframework.data.domain.Sort parseSort(String sortBy) {
         if (sortBy == null || sortBy.trim().isEmpty() || "date-desc".equalsIgnoreCase(sortBy) || "newest".equalsIgnoreCase(sortBy)) {
@@ -232,5 +235,49 @@ public class FileUploadController {
     public ResponseEntity<?> deleteNote(@PathVariable Long id) {
         noteService.deleteNote(id);
         return ResponseEntity.ok("Note deleted successfully");
+    }
+
+    @PostMapping("/{objectName}/share")
+    public ResponseEntity<?> createShareLink(
+            @PathVariable String objectName) {
+        return ResponseEntity.ok(fileUploadService.generateFileLink(objectName));
+    }
+
+    @GetMapping("/public/file/{token}/info")
+    public ResponseEntity<?> getSharedFileMetadata(@PathVariable String token) {
+        FileShareLink shareLink = fileShareLinkRepository
+                .findByTokenAndActiveTrue(token)
+                .orElseThrow(() -> new RuntimeException("Invalid share link"));
+
+        return ResponseEntity.ok(FileMetaDataDto.toDto(shareLink.getFile()));
+    }
+
+    @GetMapping("/public/file/{token}")
+    public ResponseEntity<?> getSharedFileInfo(
+            @PathVariable String token) {
+        FileShareLink shareLink =
+                fileShareLinkRepository
+                        .findByTokenAndActiveTrue(token)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Invalid share link"));
+
+        String filString = shareLink.getFile().getObjectName();
+
+        FileMetadata metadata = fileUploadService.getFileMetadata(filString).toEntity();
+
+        InputStream inputStream = storageService.download(metadata.getObjectName());
+
+        // Safely encode headers for filenames containing spaces or non-ASCII characters
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
+                .filename(metadata.getOriginalFileName(), StandardCharsets.UTF_8)
+                .build();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(metadata.getContentType()))
+                .contentLength(metadata.getSize()) // Prevents in-memory buffering & shows progress bars
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                .body(new InputStreamResource(inputStream));
+
     }
 }

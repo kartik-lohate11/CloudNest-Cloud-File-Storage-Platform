@@ -2,24 +2,26 @@ package com.cloud.CloudNest.services.impl;
 
 import com.cloud.CloudNest.dto.FileMetaDataDto;
 import com.cloud.CloudNest.entities.FileMetadata;
+import com.cloud.CloudNest.entities.FileShareLink;
 import com.cloud.CloudNest.entities.UserData;
 import com.cloud.CloudNest.exception.FileNotFoundException;
-import com.cloud.CloudNest.exception.FileUploadingException;
 import com.cloud.CloudNest.exception.StorageLimitExceededException;
 import com.cloud.CloudNest.repository.FileMetaDataRepository;
+import com.cloud.CloudNest.repository.FileShareLinkRepository;
 import com.cloud.CloudNest.services.FileService;
 import com.cloud.CloudNest.services.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,9 +30,13 @@ public class FileServiceImpl implements FileService {
 
     private final StorageService storageService;
     private final FileMetaDataRepository fileMetadataRepository;
+    private final FileShareLinkRepository fileShareLinkRepository;
 
     @Value("${minio.bucket}")
     private String bucketName;
+
+    @Value("${ui.frontend.uri}")
+    private String clientUrl;
 
     private static final long MAX_STORAGE_LIMIT_BYTES = 5L * 1024 * 1024 * 1024; // 5 GB
     private static final long MAX_SINGLE_FILE_LIMIT_BYTES = 100L * 1024 * 1024; // 100 MB
@@ -195,6 +201,31 @@ public class FileServiceImpl implements FileService {
             log.info(identifier + " removed.");
         } else
             throw new FileNotFoundException(identifier + " Not Found");
+    }
+
+    @Override
+    public String generateFileLink(String objectName) {
+        FileMetadata file = fileMetadataRepository.findByObjectName(objectName);
+
+        if (file == null) {
+            throw new FileNotFoundException("File Not Found");
+        }
+
+        String token = UUID.randomUUID().toString();
+
+        FileShareLink shareLink = FileShareLink.builder()
+                .token(token)
+                .file(file)
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        String baseUrl = (clientUrl != null && !clientUrl.isBlank()) ? clientUrl.trim() : "http://localhost:5173";
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+        }
+        fileShareLinkRepository.save(shareLink);
+        return baseUrl + "/shared/" + token;
     }
 
     private String getExtension(String fileName) {

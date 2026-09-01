@@ -12,6 +12,7 @@ import {
   Eye,
   Archive,
   Inbox,
+  Share2,
 } from "lucide-react";
 import { useFiles } from "../context/FileContext";
 
@@ -119,6 +120,17 @@ const FileTableRow = ({ file }) => {
             >
               <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Download</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                openModal("share", file);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <Share2 className="w-3.5 h-3.5 text-blue-400" />
+              <span>Share</span>
             </button>
 
             <button
