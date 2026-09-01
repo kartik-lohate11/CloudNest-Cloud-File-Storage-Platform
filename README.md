@@ -13,7 +13,7 @@
 [![OAuth2](https://img.shields.io/badge/OAuth2-Google%20%26%20GitHub-F48024.svg?logo=openid)](https://oauth.net/2/)
 [![Docker](https://img.shields.io/badge/Docker-Docker%20Compose-2496ED.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 
-**CloudNest** is a modern, enterprise-ready cloud file storage and personal workspace platform built with **Spring Boot 4.1.0 (Java 21)**, **MinIO (S3-Compatible Object Storage)**, **MySQL 8**, and **React 18 (Vite)**. It provides secure file storage, multi-factor OTP verification, JWT authorization, OAuth2 social login (Google & GitHub), real-time capacity metrics, and workspace notes management.
+**CloudNest** is a modern, enterprise-ready cloud file storage and personal workspace platform built with **Spring Boot 4.1.0 (Java 21)**, **MinIO (S3-Compatible Object Storage)**, **MySQL 8**, and **React 18 (Vite)**. It provides secure file storage, public file sharing with instant download links, multi-factor OTP verification, JWT authorization, OAuth2 social login (Google & GitHub), real-time capacity metrics, and workspace notes management.
 
 </div>
 
@@ -43,6 +43,10 @@
 ## ✨ Key Features
 
 - **High-Performance Object Storage (MinIO / S3)**: Ultra-fast binary file storage supporting uploads, chunked streaming, file downloads, and permanent deletion.
+- **Public File Sharing & Instant Links**:
+  - Secure UUID token generation for instant file sharing (`POST /file/api/{objectName}/share`).
+  - Interactive **Share Modal** with 1-click clipboard link copying and visual feedback.
+  - Dedicated **Public File Landing Page** (`/shared/:token` & `/public/file/:token`) rendering file metadata, live media preview (images), and 1-click direct download streaming without requiring receiver authentication.
 - **Enterprise-Grade Authentication**:
   - Email/password signup protected with 6-digit email OTP verification.
   - JWT Bearer Token authorization with automatic Axios request interceptors.
@@ -68,92 +72,115 @@
 
 ```mermaid
 flowchart TB
-    subgraph ClientTier["CLIENT — React 18 + Vite"]
-        direction LR
-        UI["UI Components<br/>Dashboard · FileTable · Notes · Modals"]
-        State["State Layer<br/>FileContext · Live Stats"]
-        Axios["Axios Client<br/>JWT Interceptor · 401 Handler"]
-        OAuthNav["OAuth Navigator<br/>Google / GitHub Redirects"]
-
-        UI --> State --> Axios
-        State --> OAuthNav
-    end
-
-    subgraph SecurityTier["SECURITY — Spring Security 6"]
-        direction LR
-        JwtFilter["JwtFilter<br/>Validates Bearer Token"]
-        SecurityConfig["SecurityConfig<br/>Public / Protected Routes"]
-        OAuthHandler["OAuth2SuccessHandler<br/>Account Link & Redirect"]
-
-        JwtFilter --> SecurityConfig
-    end
-
-    subgraph AppTier["APPLICATION CORE — Spring Boot 4.1 · Java 21"]
+    %% ==========================================
+    %% CLIENT LAYER
+    %% ==========================================
+    subgraph ClientTier["💻 CLIENT TIER (React 18 + Vite)"]
         direction TB
+        UI["🎨 Glassmorphic Dark UI\n(Dashboard, FileTable, Notes, Modals)"]
+        ShareModal["🔗 ShareModal\n(1-Click Link Copy & Share)"]
+        PublicPage["🌐 PublicSharedFile Page\n(/shared/:token & /public/file/:token)"]
+        State["⚡ State & Context Layer\n(FileContext, Real-Time Stats)"]
+        AxiosClient["🌐 Axios HTTP Client\n(JWT Bearer Interceptor & 401 Handler)"]
+        OAuthNav["🔗 Browser OAuth Navigator\n(Google & GitHub SSO Redirects)"]
+        
+        UI <--> State
+        UI --> ShareModal
+        State <--> AxiosClient
+    end
 
-        subgraph Controllers["Controllers"]
-            direction LR
-            UserCtrl["UserController<br/>/user/api/*"]
-            FileCtrl["FileUploadController<br/>/file/api/*"]
-            NoteCtrl["NoteController<br/>/note/api/*"]
+    %% ==========================================
+    %% SECURITY & GATEWAY LAYER
+    %% ==========================================
+    subgraph SecurityTier["🛡️ SPRING SECURITY 6 LAYER"]
+        direction TB
+        JwtFilter["🔑 JwtFilter\n(Bearer Token Claims & Principal)"]
+        OAuthHandler["🤝 Oauth2SuccessHandler\n(Account Linking & Redirect Engine)"]
+        SecurityConfig["⚙️ SecurityConfig\n(PermitAll: /file/api/public/** & Protected Matchers)"]
+    end
+
+    %% ==========================================
+    %% APPLICATION CORE LAYER (SPRING BOOT 4.1.0)
+    %% ==========================================
+    subgraph AppTier["⚡ APPLICATION CORE (Spring Boot 4.1.0 | Java 21)"]
+        direction TB
+        
+        subgraph Controllers["🕹️ REST Controllers"]
+            UserCtrl["UserController\n(/user/api/*)"]
+            FileCtrl["FileUploadController\n(/file/api/* & /public/file/*)"]
+            NoteCtrl["NoteController\n(/note/api/*)"]
         end
 
-        subgraph Services["Services"]
-            direction LR
-            UserSvc["UserService<br/>Auth · Profile · Password"]
-            OtpSvc["OtpService<br/>OTP Generate & Verify"]
-            FileSvc["FileUploadService<br/>MinIO Streaming"]
-            NoteSvc["NoteService<br/>Notes CRUD"]
-            FileSpec["FileSpecification<br/>Search & Filter"]
+        subgraph Services["⚙️ Business Services & Logic"]
+            UserService["UserService\n(Auth, Profile, Passwords)"]
+            OtpService["OtpService\n(6-Digit OTP Generator & Validator)"]
+            FileService["FileUploadService\n(MinIO Streamer, Share Links & Metadata Sync)"]
+            NoteService["NoteService\n(Workspace Notes CRUD)"]
+            JPASpec["FileSpecification\n(JPA Spec Search & Filter Engine)"]
         end
 
-        UserCtrl --> UserSvc
-        UserCtrl --> OtpSvc
-        FileCtrl --> FileSvc
-        FileCtrl --> FileSpec
-        NoteCtrl --> NoteSvc
+        UserCtrl --> UserService
+        UserCtrl --> OtpService
+        FileCtrl --> FileService
+        FileCtrl --> JPASpec
+        NoteCtrl --> NoteService
     end
 
-    subgraph StorageTier["STORAGE"]
-        direction LR
-        MySQL[("MySQL 8<br/>Users · Metadata · OTPs · Notes")]
-        MinIO[("MinIO S3<br/>File Blobs (Images/Video/PDF)")]
+    %% ==========================================
+    %% PERSISTENCE & STORAGE TIER
+    %% ==========================================
+    subgraph StorageTier["💾 STORAGE & PERSISTENCE TIER"]
+        direction TB
+        MySQL[("🗄️ MySQL 8 Database\n• User Credentials\n• File Metadata\n• FileShareLink (Tokens)\n• Verified OTPs\n• Notes Data")]
+        MinIO[("📦 MinIO S3 Object Storage\n• Binary File Blobs\n• Images, Videos, PDFs\n• Port 9000 (API) / 9001 (Console)")]
     end
 
-    subgraph ExternalTier["EXTERNAL SERVICES"]
-        direction LR
-        Google["Google OAuth2"]
-        GitHub["GitHub OAuth2"]
-        SMTP["Gmail SMTP<br/>(TLS 587)"]
+    %% ==========================================
+    %% EXTERNAL SERVICES
+    %% ==========================================
+    subgraph ExternalServices["☁️ EXTERNAL SERVICES"]
+        direction TB
+        GoogleOAuth["🔵 Google OAuth2 Server\n(OAuth Consent & Identity)"]
+        GitHubOAuth["⚫ GitHub OAuth2 Server\n(Developer OAuth Portal)"]
+        SMTPMail["✉️ Gmail SMTP Gateway\n(TLS Port 587 OTP Delivery)"]
     end
 
-    Axios -->|"REST + Bearer JWT"| JwtFilter
-    OAuthNav -->|"1 Authorize"| Google
-    OAuthNav -->|"1 Authorize"| GitHub
-    Google -->|"2 Code + Profile"| OAuthHandler
-    GitHub -->|"2 Code + Profile"| OAuthHandler
-    OAuthHandler -->|"3 Redirect + JWT"| ClientTier
+    %% ==========================================
+    %% RELATIONSHIPS & DATA FLOWS
+    %% ==========================================
+    AxiosClient -->|"HTTP REST + Authorization: Bearer JWT"| JwtFilter
+    PublicPage -->|"Public GET /public/file/{token}/info"| SecurityConfig
+    PublicPage -->|"Public Stream GET /public/file/{token}"| SecurityConfig
+    
+    OAuthNav -->|"1. Authorize Request"| GoogleOAuth
+    OAuthNav -->|"1. Authorize Request"| GitHubOAuth
+    
+    GoogleOAuth -->|"2. OAuth Code & Profile"| OAuthHandler
+    GitHubOAuth -->|"2. OAuth Code & Profile"| OAuthHandler
+    OAuthHandler -->|"3. Redirect /oauth/callback?token=JWT"| ClientTier
 
+    JwtFilter --> SecurityConfig
     SecurityConfig --> Controllers
 
-    UserSvc --> MySQL
-    OtpSvc --> MySQL
-    OtpSvc -->|"Send OTP"| SMTP
-    FileSvc -->|"Metadata + Audit"| MySQL
-    FileSvc -->|"Stream Bytes"| MinIO
-    NoteSvc --> MySQL
+    UserService --> MySQL
+    OtpService --> MySQL
+    OtpService -->|"Send Email OTP"| SMTPMail
+    FileService -->|"Metadata & Share Tokens"| MySQL
+    FileService -->|"Stream File Bytes / Presigned S3"| MinIO
+    NoteService --> MySQL
 
-    classDef client fill:#EEF2FF,stroke:#6366F1,stroke-width:1.5px,color:#1E1B4B;
-    classDef security fill:#FDF4FF,stroke:#C026D3,stroke-width:1.5px,color:#4A044E;
-    classDef app fill:#ECFDF5,stroke:#10B981,stroke-width:1.5px,color:#064E3B;
-    classDef storage fill:#F0F9FF,stroke:#0EA5E9,stroke-width:1.5px,color:#0C4A6E;
-    classDef external fill:#FFF7ED,stroke:#F97316,stroke-width:1.5px,color:#7C2D12;
+    %% Styling
+    classDef client fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#fff;
+    classDef security fill:#311042,stroke:#c084fc,stroke-width:2px,color:#fff;
+    classDef app fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff;
+    classDef storage fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#fff;
+    classDef external fill:#451a03,stroke:#fb923c,stroke-width:2px,color:#fff;
 
-    class ClientTier,UI,State,Axios,OAuthNav client;
+    class ClientTier,UI,ShareModal,PublicPage,State,AxiosClient,OAuthNav client;
     class SecurityTier,JwtFilter,OAuthHandler,SecurityConfig security;
-    class AppTier,Controllers,Services,UserCtrl,FileCtrl,NoteCtrl,UserSvc,OtpSvc,FileSvc,NoteSvc,FileSpec app;
+    class AppTier,Controllers,Services,UserCtrl,FileCtrl,NoteCtrl,UserService,OtpService,FileService,NoteService,JPASpec app;
     class StorageTier,MySQL,MinIO storage;
-    class ExternalTier,Google,GitHub,SMTP external;
+    class ExternalServices,GoogleOAuth,GitHubOAuth,SMTPMail external;
 ```
 
 ---
@@ -162,7 +189,9 @@ flowchart TB
 
 ```text
 CloudNest/
-├── docker-compose.yml              # MinIO S3 Object Storage Docker Container Setup
+├── Dockerfile                      # Production Multi-Stage Dockerfile (Java 21 Runtime)
+├── .dockerignore                   # Docker Build Context Optimization
+├── docker-compose.yml              # MinIO S3 & Backend Container Orchestration
 ├── pom.xml                         # Spring Boot 4.1.0 & Java 21 Maven Configuration
 ├── README.md                       # Comprehensive Project Documentation
 ├── src/
@@ -173,8 +202,8 @@ CloudNest/
 │   │   │   ├── dto/                # UserDto, NoteDto, FileMetaDataDto, CategoryStatsDto
 │   │   │   │   ├── request/        # LoginRequest, SendOtpRequest, VerifyOtpRequest, etc.
 │   │   │   │   └── response/       # AuthResponse, OtpResponse, PaginatedFileResponse
-│   │   │   ├── entities/           # UserData, FileMetaData, Note, EmailOtp
-│   │   │   ├── repository/         # JPA Repositories (UserData, FileMetaData, Note, etc.)
+│   │   │   ├── entities/           # UserData, FileMetaData, FileShareLink, Note, EmailOtp
+│   │   │   ├── repository/         # JPA Repositories (UserData, FileMetaData, FileShareLink, etc.)
 │   │   │   ├── security/           # JwtFilter, Oauth2SuccessHandler, UserPrincipal
 │   │   │   ├── services/           # Business Logic Interfaces & Implementations
 │   │   │   ├── specification/      # FileSpecification (JPA Specification for Search/Filter)
@@ -189,12 +218,12 @@ CloudNest/
     ├── tailwind.config.js          # Tailwind CSS Configuration
     ├── vite.config.js              # Vite Build Configuration
     └── src/
-        ├── components/             # FileTable, FileCard, StorageCard, Sidebar, Header, etc.
+        ├── components/             # FileTable, FileCard, ShareModal, StorageCard, Sidebar, Header
         ├── context/                # FileContext (Global state for files, user, stats, modals)
-        ├── pages/                  # Dashboard, Files, Notes, Archive, Trash, Login, Signup, OAuthCallback
-        ├── services/               # api.js (Axios HTTP Client with JWT Interceptors)
+        ├── pages/                  # Dashboard, Files, Notes, Archive, Trash, Login, Signup, OAuthCallback, PublicSharedFile
+        ├── services/               # api.js (Axios HTTP Client with JWT Interceptors & Sharing)
         ├── styles/                 # index.css (Glassmorphism & dark theme design system)
-        ├── App.jsx                 # Routing & ProtectedRoute setup
+        ├── App.jsx                 # Routing & Public/Protected Route setup
         └── main.jsx                # Application Entrypoint
 ```
 
@@ -219,7 +248,7 @@ CloudNest/
 - **HTTP Client**: Axios with global JWT Request & 401 Response Interceptors
 
 ### Infrastructure & DevOps
-- **Docker & Docker Compose**: Automated containerization for MinIO S3 storage
+- **Docker & Docker Compose**: Automated containerization for MinIO S3 storage and Spring Boot backend
 - **MinIO Console**: Web-based administration panel on `http://localhost:9001`
 
 ---
@@ -297,6 +326,9 @@ docker compose up -d
    minio.access-key=admin
    minio.secret-key=admin12345
    minio.bucket=cloudnest
+
+   # Frontend URI for Share Links
+   ui.frontend.uri=http://localhost:5173
 
    # SMTP Email Configuration (For OTP)
    spring.mail.host=smtp.gmail.com
@@ -393,7 +425,7 @@ The Spring Boot backend will start on **`http://localhost:8080`**.
 | `POST` | `/user/api/update-password` | Reset password using verified email | No |
 | `GET` | `/user/api/me` | Fetch authenticated user profile | **Yes (Bearer JWT)** |
 
-### 📂 File Management APIs (`/file/api`)
+### 📂 File Management & Sharing APIs (`/file/api`)
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
@@ -403,6 +435,9 @@ The Spring Boot backend will start on **`http://localhost:8080`**.
 | `GET` | `/file/api/filter/{userName}` | Filter files by type (`image`, `video`, `document`, `other`) | **Yes** |
 | `GET` | `/file/api/sort/{userName}` | Dynamic sorting (`date-desc`, `date-asc`, `name-asc`, `size-desc`) | **Yes** |
 | `GET` | `/file/api/download/{objectName}` | Download file stream directly from MinIO | **Yes** |
+| `POST` | `/file/api/{objectName}/share` | Generate public share link UUID token | **Yes** |
+| `GET` | `/file/api/public/file/{token}/info` | Retrieve shared file metadata for public viewer | **No (Public)** |
+| `GET` | `/file/api/public/file/{token}` | Stream and download shared file binary directly from MinIO | **No (Public)** |
 | `DELETE` | `/file/api/delete/{objectName}` | Permanently delete file from MinIO & MySQL | **Yes** |
 
 ### 📝 Notes APIs (`/note/api`)
@@ -419,12 +454,16 @@ The Spring Boot backend will start on **`http://localhost:8080`**.
 ## 🔒 Security & Authentication Flow
 
 1. **JWT Header Attachment**:
-   Axios automatically includes `Authorization: Bearer <token>` for all outgoing HTTP requests using request interceptors.
-2. **OAuth2 Callback Flow**:
+   Axios automatically includes `Authorization: Bearer <token>` for all authenticated outgoing HTTP requests using request interceptors.
+2. **Public File Sharing & Token Verification**:
+   - Authenticated user requests a share link via `POST /file/api/{objectName}/share`.
+   - Backend creates a `FileShareLink` record with a unique UUID token and active state.
+   - Any guest or unauthenticated user visiting `/shared/:token` or `/public/file/:token` fetches file metadata via `GET /file/api/public/file/{token}/info` and streams the file binary via `GET /file/api/public/file/{token}` without requiring a login session.
+3. **OAuth2 Callback Flow**:
    - User clicks **Google** or **GitHub** login button -> Browser navigates to `/oauth2/authorization/<provider>`.
-   - Backend processes OAuth profile, generates JWT token, and redirects to `http://localhost:5173/oauth/callback?token=JWT_TOKEN`.
-   - The React `OAuthCallback` component extracts the token, stores it in `localStorage`, strips the token parameter from the browser URL, and renders the Dashboard (`/`).
-3. **Session Expiry Handling**:
+   - Backend processes OAuth profile, links accounts by email, generates JWT token, and redirects to `http://localhost:5173/oauth/callback?token=JWT_TOKEN`.
+   - The React `OAuthCallback` component extracts the token, stores it in `localStorage`, sanitizes the URL with `window.history.replaceState`, and renders the Dashboard (`/`).
+4. **Session Expiry Handling**:
    A global Axios response interceptor catches HTTP `401 Unauthorized` responses, clears local storage, and redirects the user safely to the `/login` route.
 
 ---
