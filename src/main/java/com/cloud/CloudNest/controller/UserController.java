@@ -10,10 +10,7 @@ import com.cloud.CloudNest.services.OtpService;
 import com.cloud.CloudNest.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user/api")
@@ -62,4 +59,10 @@ public class UserController {
     public ResponseEntity<?> updatePassword(@RequestBody ForgotPasswordRequest request) {
         return ResponseEntity.ok(userService.resetPassword(request));
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck() {
+        return ResponseEntity.ok("Sever is Healthy....");
+    }
+
 }

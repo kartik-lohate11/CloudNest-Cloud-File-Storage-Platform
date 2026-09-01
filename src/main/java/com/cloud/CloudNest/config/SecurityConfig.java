@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/user/api/verify-otp",
                                 "/user/api/update-password",
                                 "/file/api/public/**",
+                                "/user/api/health",
 
                                 // OAuth2 endpoints
                                 "/oauth2/**",
